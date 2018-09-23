@@ -67,22 +67,23 @@ unsigned long loginlog_failedattempts(uint32 ip, unsigned int minutes) {
  * @param rcode:
  * @param message:
  */
-void login_log(uint32 ip, const char* username, int rcode, const char* message) {
-	char esc_username[NAME_LENGTH*2+1];
-	char esc_message[255*2+1];
+void login_log(uint32 ip, const char *username, int rcode, const char *message)
+{
+	char esc_username[NAME_LENGTH * 2 + 1];
+	char esc_message[255 * 2 + 1];
 	int retcode;
 
-	if( !enabled )
+	if (!enabled)
 		return;
 
 	Sql_EscapeStringLen(sql_handle, esc_username, username, strnlen(username, NAME_LENGTH));
 	Sql_EscapeStringLen(sql_handle, esc_message, message, strnlen(message, 255));
 
 	retcode = Sql_Query(sql_handle,
-		"INSERT INTO `%s`(`time`,`ip`,`user`,`rcode`,`log`) VALUES (NOW(), '%s', '%s', '%d', '%s')",
-		log_login_db, ip2str(ip,NULL), esc_username, rcode, esc_message);
+						"INSERT INTO `%s`(`time`,`ip`,`user`,`rcode`,`log`) VALUES (NOW(), '%s', '%s', '%d', '%s')",
+						log_login_db, ip2str(ip, NULL), esc_username, rcode, esc_message);
 
-	if( retcode != SQL_SUCCESS )
+	if (retcode != SQL_SUCCESS)
 		Sql_ShowDebug(sql_handle);
 }
 
@@ -195,7 +196,7 @@ bool loginlog_init(void) {
 
 	if( codepage[0] != '\0' && SQL_ERROR == Sql_SetEncoding(sql_handle, codepage) )
 		Sql_ShowDebug(sql_handle);
-
+		
 	enabled = true;
 
 	return true;

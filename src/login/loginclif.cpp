@@ -116,6 +116,7 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 	}
 
 	login_log(ip, sd->userid, 100, "login ok");
+
 	ShowStatus("Connection of the account '%s' accepted.\n", sd->userid);
 
 	WFIFOHEAD(fd,header+size*server_num);
@@ -201,12 +202,12 @@ static void logclif_auth_failed(struct login_session_data* sd, int result) {
 
 	if (login_config.log_login)
 	{
-		if(result >= 0 && result <= 15)
-		    login_log(ip, sd->userid, result, msg_txt(result));
-		else if(result >= 99 && result <= 104)
-		    login_log(ip, sd->userid, result, msg_txt(result-83)); //-83 offset
+		if (result >= 0 && result <= 15)
+			login_log(ip, sd->userid, result, msg_txt(result));
+		else if (result >= 99 && result <= 104)
+			login_log(ip, sd->userid, result, msg_txt(result - 83)); //-83 offset
 		else
-		    login_log(ip, sd->userid, result, msg_txt(22)); //unknow error
+			login_log(ip, sd->userid, result, msg_txt(22)); //unknow error
 	}
 
 	if( (result == 0 || result == 1) && login_config.dynamic_pass_failure_ban )
@@ -426,6 +427,7 @@ static int logclif_parse_reqcharconnec(int fd, struct login_session_data *sd, ch
 
 		ShowInfo("Connection request of the char-server '%s' @ %u.%u.%u.%u:%u (account: '%s', ip: '%s')\n", server_name, CONVIP(server_ip), server_port, sd->userid, ip);
 		sprintf(message, "charserver - %s@%u.%u.%u.%u:%u", server_name, CONVIP(server_ip), server_port);
+
 		login_log(session[fd]->client_addr, sd->userid, 100, message);
 
 		result = login_mmo_auth(sd, true);
@@ -492,7 +494,9 @@ int logclif_parse(int fd) {
 		if( login_config.ipban && ipban_check(ipl) )
 		{
 			ShowStatus("Connection refused: IP isn't authorised (deny/allow, ip: %s).\n", ip);
+
 			login_log(ipl, "unknown", -3, "ip banned");
+
 			WFIFOHEAD(fd,23);
 			WFIFOW(fd,0) = 0x6a;
 			WFIFOB(fd,2) = 3; // 3 = Rejected from Server
