@@ -24431,20 +24431,6 @@ BUILDIN_FUNC(identifyall) {
 
 // declarations that were supposed to be exported from npc_chat.c
 #ifdef PCRE_SUPPORT
-BUILDIN_FUNC(get_unique_id)
-{
-	struct map_session_data *sd;
-
-	if (!script_rid2sd(sd))
-	{
-		script_pushint(st, 0);
-		return SCRIPT_CMD_FAILURE;
-	}
-
-	script_pushint(st, session[sd->fd]->gepard_info.unique_id);
-
-	return SCRIPT_CMD_SUCCESS;
-}
 BUILDIN_FUNC(defpattern);
 BUILDIN_FUNC(activatepset);
 BUILDIN_FUNC(deactivatepset);
