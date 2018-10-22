@@ -36,15 +36,12 @@
 #include "int_party.hpp"
 #include "int_storage.hpp"
 
-struct char_interface char_s;
-struct char_interface *chr;
 //definition of exported var declared in .h
 int login_fd=-1; //login file descriptor
 int char_fd=-1; //char file descriptor
 struct Schema_Config schema_config;
 struct CharServ_Config charserv_config;
 struct mmo_map_server map_server[MAX_MAP_SERVERS];
-struct judas_points *jpoints; // Judas DB
 //Custom limits for the fame lists. [Skotlex]
 int fame_list_size_chemist = MAX_FAME_LIST;
 int fame_list_size_smith = MAX_FAME_LIST;
@@ -2645,10 +2642,6 @@ void char_sql_config_read(const char* cfgName) {
 		//support the import command, just like any other config
 		else if(!strcmpi(w1,"import"))
 			char_sql_config_read(w2);
-		else if (!strcmpi(w1, "points_account_db"))
-			safestrncpy(schema_config.points_account_db, w2, sizeof(schema_config.points_account_db));
-		else if (!strcmpi(w1, "points_char_db"))
-			safestrncpy(schema_config.points_char_db, w2, sizeof(schema_config.points_char_db));
 	}
 	fclose(fp);
 	ShowInfo("Done reading %s.\n", cfgName);
@@ -2700,7 +2693,6 @@ void char_set_default_sql(){
 
 //set default config
 void char_set_defaults(){
-	chr = &char_s;
 #if PACKETVER_SUPPORTS_PINCODE
 	charserv_config.pincode_config.pincode_enabled = true;
 	charserv_config.pincode_config.pincode_changetime = 0;

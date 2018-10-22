@@ -10,7 +10,6 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-#include "../common/conf.hpp"
 #include "../common/cbasetypes.hpp"
 #include "../common/malloc.hpp"
 #include "../common/showmsg.hpp"
@@ -38,19 +37,6 @@
 #define WISDATA_TTL (60*1000)	//Wis data Time To Live (60 seconds)
 #define WISDELLIST_MAX 256		// Number of elements in the list Delete data Wis
 
-struct point_collection {
-	unsigned char id;
-	// Judas Test
-	char the_variable[100];
-	char the_gained_msg[100];
-	char the_removed_msg[100];
-};
-
-struct judas_points {
-	struct point_collection **jpc;
-	unsigned char points;
-	unsigned char id;
-}jpoints_DB;
 
 Sql* sql_handle = NULL;	///Link to mysql db, connection FD
 
@@ -581,17 +567,6 @@ void inter_savereg(uint32 account_id, uint32 char_id, const char *key, unsigned 
 	if( is_string && val ) {
 		Sql_EscapeString(sql_handle, esc_val, (char*)val);
 	}
-
-	// Judas DB - Look into array for match
-	int foundIt = 0;
-
-	for (int x = 0; x < chr->jpoints->points; x++) {
-		if (strcmp(key, chr->jpoints->jpc[x]->the_variable) == 0) {
-			foundIt = 1;
-			break;
-		}
-	}
-
 	if( key[0] == '#' && key[1] == '#' ) { // global account reg
 		if( session_isValid(login_fd) )
 			chlogif_send_global_accreg(key,index,val,is_string);
@@ -608,26 +583,12 @@ void inter_savereg(uint32 account_id, uint32 char_id, const char *key, unsigned 
 					Sql_ShowDebug(sql_handle);
 			}
 		} else {
-			// Judas Points
-			if (foundIt == 1) {
-				if (val) {
-					if (SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `%s` (`account_id`,`key`,`index`, `value`) VALUES ('%d','%s','%u','%d')", schema_config.points_account_db, account_id, key, index, (int)val))
-						Sql_ShowDebug(sql_handle);
-				}
-				else {
-					if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `account_id` = '%d' AND `key` = '%s' AND `index` = '%u' LIMIT 1", schema_config.points_account_db, account_id, key, index))
-						Sql_ShowDebug(sql_handle);
-				}
-			}
-			else {
-				if (val) {
-					if (SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `%s` (`account_id`,`key`,`index`,`value`) VALUES ('%d','%s','%u','%d')", schema_config.acc_reg_num_table, account_id, esc_key, index, (int)val))
-						Sql_ShowDebug(sql_handle);
-				}
-				else {
-					if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `account_id` = '%d' AND `key` = '%s' AND `index` = '%u' LIMIT 1", schema_config.acc_reg_num_table, account_id, esc_key, index))
-						Sql_ShowDebug(sql_handle);
-				}
+			if( val ) {
+				if( SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `%s` (`account_id`,`key`,`index`,`value`) VALUES ('%d','%s','%u','%d')", schema_config.acc_reg_num_table, account_id, esc_key, index, (int)val) )
+					Sql_ShowDebug(sql_handle);
+			} else {
+				if( SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `account_id` = '%d' AND `key` = '%s' AND `index` = '%u' LIMIT 1", schema_config.acc_reg_num_table, account_id, esc_key, index) )
+					Sql_ShowDebug(sql_handle);
 			}
 		}
 	} else { /* char reg */
@@ -640,26 +601,12 @@ void inter_savereg(uint32 account_id, uint32 char_id, const char *key, unsigned 
 					Sql_ShowDebug(sql_handle);
 			}
 		} else {
-			// Judas Points
-			if (foundIt == 1) {
-				if (val) {
-					if (SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `%s` (`char_id`,`key`,`index`,`value`) VALUES ('%d','%s','%u','%d')", schema_config.points_char_db, char_id, key, index, (int)val))
-						Sql_ShowDebug(sql_handle);
-				}
-				else {
-					if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `char_id` = '%d' AND `key` = '%s' AND `index` = '%u' LIMIT 1", schema_config.points_char_db, char_id, key, index))
-						Sql_ShowDebug(sql_handle);
-				}
-			}
-			else {
-				if (val) {
-					if (SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `%s` (`char_id`,`key`,`index`,`value`) VALUES ('%d','%s','%u','%d')", schema_config.char_reg_num_table, char_id, esc_key, index, (int)val))
-						Sql_ShowDebug(sql_handle);
-				}
-				else {
-					if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `char_id` = '%d' AND `key` = '%s' AND `index` = '%u' LIMIT 1", schema_config.char_reg_num_table, char_id, esc_key, index))
-						Sql_ShowDebug(sql_handle);
-				}
+			if( val ) {
+				if( SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `%s` (`char_id`,`key`,`index`,`value`) VALUES ('%d','%s','%u','%d')", schema_config.char_reg_num_table, char_id, esc_key, index, (int)val) )
+					Sql_ShowDebug(sql_handle);
+			} else {
+				if( SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `char_id` = '%d' AND `key` = '%s' AND `index` = '%u' LIMIT 1", schema_config.char_reg_num_table, char_id, esc_key, index) )
+					Sql_ShowDebug(sql_handle);
 			}
 		}
 	}
@@ -672,11 +619,7 @@ int inter_accreg_fromsql(uint32 account_id, uint32 char_id, int fd, int type)
 	size_t len;
 	unsigned int plen = 0;
 
-	// Judas Points
 	switch( type ) {
-		case 5:
-		case 4:
-			break;
 		case 3: //char reg
 			if( SQL_ERROR == Sql_Query(sql_handle, "SELECT `key`, `index`, `value` FROM `%s` WHERE `char_id`='%d'", schema_config.char_reg_str_table, char_id) )
 				Sql_ShowDebug(sql_handle);
@@ -758,14 +701,6 @@ int inter_accreg_fromsql(uint32 account_id, uint32 char_id, int fd, int type)
 	Sql_FreeResult(sql_handle);
 
 	switch( type ) {
-		case 5: //char Judas reg
-			if (SQL_ERROR == Sql_Query(sql_handle, "SELECT `key`, `index`, `value` FROM `%s` WHERE `char_id`='%d'", schema_config.points_char_db, char_id))
-				Sql_ShowDebug(sql_handle);
-			break;
-		case 4: //account Judas reg
-			if (SQL_ERROR == Sql_Query(sql_handle, "SELECT `key`, `index`, `value` FROM `%s` WHERE `account_id`='%d'", schema_config.points_account_db, account_id))
-				Sql_ShowDebug(sql_handle);
-			break;
 		case 3: //char reg
 			if (SQL_ERROR == Sql_Query(sql_handle, "SELECT `key`, `index`, `value` FROM `%s` WHERE `char_id`='%d'", schema_config.char_reg_num_table, char_id))
 				Sql_ShowDebug(sql_handle);
@@ -998,64 +933,6 @@ void inter_config_readConf(void) {
 	}
 }
 
-// Judas DB
-void inter_config_points_read(void) {
-	struct config_t bg_conf;
-
-	chr->jpoints = &jpoints_DB;
-
-	struct config_setting_t *data = NULL;
-	const char *config_filename = "conf/custom_points.conf";
-
-	if (!config_load_file(&bg_conf, config_filename))
-		return;
-
-	data = config_lookup(&bg_conf, "custom_points");
-
-	if (data != NULL) {
-		struct config_setting_t *settings = config_setting_get_elem(data, 0);
-		struct config_setting_t *pconfig;
-		int offline = 0;
-
-		if ((pconfig = config_setting_get_member(settings, "points_var")) != NULL) {
-			int i;
-			int point_count = config_setting_length(pconfig);
-			CREATE(chr->jpoints->jpc, struct point_collection *, point_count);
-			for (i = 0; i < point_count; i++) {
-				struct config_setting_t *arena = config_setting_get_elem(pconfig, i);
-				const char *aVariable, *aGainedMsg, *aRemovedMsg;
-
-				chr->jpoints->jpc[i] = NULL;
-
-				if (!config_setting_lookup_string(arena, "variable", &aVariable)) {
-					ShowError("bg_config_read: failed to find 'variable' for arena '%s'/#%d\n", "...", i);
-					continue;
-				}
-
-				if (!config_setting_lookup_string(arena, "gained_msg", &aGainedMsg)) {
-					ShowError("bg_config_read: failed to find 'gained_msg' for arena '%s'/#%d\n", "...", i);
-					continue;
-				}
-
-				if (!config_setting_lookup_string(arena, "removed_msg", &aRemovedMsg)) {
-					ShowError("bg_config_read: failed to find 'removed_msg' for arena '%s'/#%d\n", "...", i);
-					continue;
-				}
-
-				CREATE(chr->jpoints->jpc[i], struct point_collection, 1);
-
-				chr->jpoints->jpc[i]->id = i;
-				safestrncpy(chr->jpoints->jpc[i]->the_variable, aVariable, 100);
-				safestrncpy(chr->jpoints->jpc[i]->the_gained_msg, aGainedMsg, 100);
-				safestrncpy(chr->jpoints->jpc[i]->the_removed_msg, aRemovedMsg, 100);
-
-			}
-			chr->jpoints->points = point_count;
-		}
-	}
-	config_destroy(&bg_conf);
-}
-
 void inter_config_finalConf(void) {
 
 }
@@ -1069,9 +946,6 @@ int inter_init_sql(const char *file)
 {
 	inter_config_defaults();
 	inter_config_read(file);
-	// Judas DB
-	//_sleep(5000);
-	inter_config_points_read();
 
 	//DB connection initialized
 	sql_handle = Sql_Malloc();
@@ -1465,11 +1339,6 @@ int mapif_parse_RegistryRequest(int fd)
 	if (RFIFOB(fd,11)) mapif_account_reg_reply(fd,RFIFOL(fd,2),RFIFOL(fd,6),2);
 	//Ask Login Server for Account2 values.
 	if (RFIFOB(fd,10)) chlogif_request_accreg2(RFIFOL(fd,2),RFIFOL(fd,6));
-	// Judas Points
-	//Load Char Registry
-	if (RFIFOB(fd, 12)) mapif_account_reg_reply(fd, RFIFOL(fd, 2), RFIFOL(fd, 6), 5); // 5: char reg
-	//Load Account Registry
-	if (RFIFOB(fd, 11)) mapif_account_reg_reply(fd, RFIFOL(fd, 2), RFIFOL(fd, 6), 4); // 4: account reg
 	return 1;
 }
 

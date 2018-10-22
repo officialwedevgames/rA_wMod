@@ -4,7 +4,6 @@
 #include "conf.hpp"
 
 #include "showmsg.hpp" // ShowError
-#include "utils.hpp"
 
 int conf_read_file(config_t *config, const char *config_filename)
 {
@@ -16,22 +15,6 @@ int conf_read_file(config_t *config, const char *config_filename)
 		return 1;
 	}
 	return 0;
-}
-
-int config_load_file(struct config_t *config, const char *config_filename)
-{
-	config_init(config);
-	if (!config_read_file(config, config_filename)) {
-		ShowError("Unable to load '%s' - File not found\n", config_filename);
-		return CONFIG_FALSE;
-	}
-	if (config_read_file(config, config_filename) != CONFIG_TRUE) {
-		ShowError("%s:%d - %s\n", config_error_file(config),
-			config_error_line(config), config_error_text(config));
-		config_destroy(config);
-		return CONFIG_FALSE;
-	}
-	return CONFIG_TRUE;
 }
 
 //
