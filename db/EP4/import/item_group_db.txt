@@ -2,3 +2,4 @@
 //
 // Structure of Database:
 // GroupID,ItemID,Rate{,Amount,Random,isAnnounced,Duration,GUID,isBound,isNamed}
+

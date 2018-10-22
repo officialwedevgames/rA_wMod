@@ -1,23 +1,24 @@
-payon,78,146,5	trader	Liza	4_F_JOB_BLACKSMITH,{
+prontera,123,82,3	trader	Liza	4_F_JOB_BLACKSMITH,{
 OnInit:
 	tradertype("NST_CUSTOM");
-	sellitem "Letter_Challenge_Box",75;
-	sellitem "Fragment_Box",200;
-	sellitem "Upg_Katar",300;
-	sellitem "Upg_Two_Handed_Axe",300;
-	sellitem "Upg_Lance",300;
-	sellitem "Upg_Book",300;
-	sellitem "Upg_Staff",300;
-	sellitem "Upg_Dagger",300;
-	sellitem "Upg_Mace",300;
-	sellitem "Upg_Bow",300;
-	sellitem "Upg_Twohand_Sword",300;
-	sellitem "Upg_Adv_Suit",200;
-	sellitem "Upg_Shoes",200;
-	sellitem "Upg_Guard",200;
-	sellitem "Upg_Hood",125;
-	sellitem "Upg_Muffler",200;
-	sellitem "Upg_Clip",200;
+	sellitem "c_potion_bundle",2,0,1;
+	sellitem "Letter_Challenge_Box",75,0,0;
+	sellitem "Fragment_Box",200,0,0;
+	sellitem "Upg_Katar",300,0,0;
+	sellitem "Upg_Two_Handed_Axe",300,0,0;
+	sellitem "Upg_Lance",300,0,0;
+	sellitem "Upg_Book",300,0,0;
+	sellitem "Upg_Staff",300,0,0;
+	sellitem "Upg_Dagger",300,0,0;
+	sellitem "Upg_Mace",300,0,0;
+	sellitem "Upg_Bow",300,0,0;
+	sellitem "Upg_Twohand_Sword",300,0,0;
+	sellitem "Upg_Adv_Suit",200,0,0;
+	sellitem "Upg_Shoes",200,0,0;
+	sellitem "Upg_Guard",200,0,0;
+	sellitem "Upg_Hood",125,0,0;
+	sellitem "Upg_Muffler",200,0,0;
+	sellitem "Upg_Clip",200,0,0;
 	end;
 
 /* allows currency to be item 501 and 502 */

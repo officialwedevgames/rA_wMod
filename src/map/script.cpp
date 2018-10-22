@@ -70,6 +70,9 @@ struct eri *stack_ers;
 
 static bool script_rid2sd_( struct script_state *st, struct map_session_data** sd, const char *func );
 
+// Judas Reward v2
+const char *reward_lists[] = { "\"E\"", "\"C\"", "\"D\"", "\"H\"", "\"R\"", "\"W\"", "\"M\"", "\"V\"", "\"O\"", "\"N\"", "\"L\"", "\"B\"", "\"U\"", "\"P\"" };
+
 /**
  * Get `sd` from a account id in `loc` param instead of attached rid
  * @param st Script
@@ -4769,6 +4772,31 @@ BUILDIN_FUNC(mes)
 	}
 
 	st->mes_active = 1; // Invoking character has a NPC dialog box open.
+	return SCRIPT_CMD_SUCCESS;
+}
+
+// Judas Unique
+/*==========================================
+* Item Destroy
+*------------------------------------------*/
+BUILDIN_FUNC(uniqueitemdestroy)
+{
+	int nameid = script_getnum(st, 2);
+	int uniqueFlag = script_getnum(st, 3);
+
+	pc_uniqueitemdestroy(nameid);
+
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/*==========================================
+* Item Destroy
+*------------------------------------------*/
+BUILDIN_FUNC(itemdestroy)
+{
+	int nameid = script_getnum(st, 2);
+	pc_itemdestroy(nameid, true);
+
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -10081,6 +10109,48 @@ BUILDIN_FUNC(guildopenstorage)
 	return SCRIPT_CMD_SUCCESS;
 }
 
+BUILDIN_FUNC(guildopenstorage_log){
+#if PACKETVER < 20140205
+	ShowError( "buildin_guildopenstorage_log: This command requires PACKETVER 2014-02-05 or newer.\n" );
+	return SCRIPT_CMD_FAILURE;
+#else
+	struct map_session_data* sd;
+ 	if( !script_charid2sd( 2, sd ) ){
+		return SCRIPT_CMD_FAILURE;
+	}
+ 	script_pushint( st, storage_guild_log_read( sd ) );
+ 	return SCRIPT_CMD_SUCCESS;
+#endif
+}
+ BUILDIN_FUNC(guild_has_permission){
+	struct map_session_data* sd;
+ 	if( !script_charid2sd( 3, sd ) ){
+		return SCRIPT_CMD_FAILURE;
+	}
+ 	int permission = script_getnum(st,2);
+ 	if( permission == 0 ){
+		ShowError( "buildin_guild_has_permission: No permission given.\n" );
+		return SCRIPT_CMD_FAILURE;
+	}
+ 	if( ( permission & GUILD_PERM_ALL ) == 0 ){
+		ShowError( "buildin_guild_has_permission: Invalid permission '%d'.\n", permission );
+		return SCRIPT_CMD_FAILURE;
+	}
+ 	if( !sd->guild ){
+		script_pushint( st, false );
+ 		return SCRIPT_CMD_SUCCESS;
+	}
+ 	int position = guild_getposition(sd);
+	
+	if( position < 0 || ( sd->guild->position[position].mode&permission ) != permission ){
+		script_pushint( st, false );
+ 		return SCRIPT_CMD_SUCCESS;
+	}
+	
+	script_pushint( st, true );
+ 	return SCRIPT_CMD_SUCCESS;
+}
+
 /*==========================================
  * Make player use a skill trought item usage
  *------------------------------------------*/
@@ -11168,6 +11238,84 @@ BUILDIN_FUNC(getareausers)
 	map_foreachinallarea(buildin_getareausers_sub,
 		m,x0,y0,x1,y1,BL_PC,&users);
 	script_pushint(st,users);
+	return SCRIPT_CMD_SUCCESS;
+}
+
+/*==========================================
+ * getunits(<type>{,<array_variable>[<first value>]})
+ * getmapunits(<type>,<"map name">{,<array_variable>[<first value>]})
+ * getareaunits(<type>,<"map name">,<x1>,<y1>,<x2>,<y2>{,<array_variable>[<first value>]})
+ *------------------------------------------*/
+BUILDIN_FUNC(getunits)
+{
+	struct block_list *bl = NULL;
+	struct map_session_data *sd = NULL;
+	struct script_data *data = NULL;
+	char *command = (char *)script_getfuncname(st);
+	const char *str;
+	const char *name;
+	int type = script_getnum(st, 2);
+	int size = 0;
+	int32 idx, id;
+	int16 m = 0, x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+	struct s_mapiterator *iter = mapit_alloc(MAPIT_NORMAL, bl_type(type));
+ 	if (!strcmp(command, "getmapunits"))
+	{
+		str = script_getstr(st, 3);
+		if ((m = map_mapname2mapid(str)) < 0) {
+			script_pushint(st, -1);
+			st->state = END;
+			ShowWarning("buildin_%s: Unknown map '%s'.\n", command, str);
+			return SCRIPT_CMD_FAILURE;
+		}
+		if (script_hasdata(st, 4))
+			data = script_getdata(st, 4);
+	}
+	else if (!strcmp(command, "getareaunits"))
+	{
+		str = script_getstr(st, 3);
+		if ((m = map_mapname2mapid(str)) < 0) {
+			script_pushint(st, -1);
+			st->state = END;
+			ShowWarning("buildin_%s: Unknown map '%s'.\n", command, str);
+			return SCRIPT_CMD_FAILURE;
+		}
+		x0 = script_getnum(st, 4);
+		y0 = script_getnum(st, 5);
+		x1 = script_getnum(st, 6);
+		y1 = script_getnum(st, 7);
+ 		if (script_hasdata(st, 8))
+			data = script_getdata(st, 8);
+	}
+	else
+	{
+		if (script_hasdata(st, 3))
+			data = script_getdata(st, 3);
+	}
+ 	if (data)
+	{
+		if (!data_isreference(data))
+		{
+			ShowError("buildin_%s: not a variable\n", command);
+			script_reportdata(data);
+			st->state = END;
+			return SCRIPT_CMD_FAILURE;
+		}
+		id = reference_getid(data);
+		idx = reference_getindex(data);
+		name = reference_getname(data);
+	}
+ 	for (bl = (struct block_list*)mapit_first(iter); mapit_exists(iter); bl = (struct block_list*)mapit_next(iter))
+	{
+		if (!m || (m == bl->m && !x0 && !y0 && !x1 && !y1) || (bl->m == m && (bl->x >= x0 && bl->y <= y0) && (bl->x <= x1 && bl->y >= y1)))
+		{
+			if (data)
+				set_reg(st, sd, reference_uid(id, idx + size), name, (is_string_variable(name) ? (void*)status_get_name(bl) : (void*)__64BPRTSIZE(bl->id)), reference_getref(data));
+			size++;
+		}
+	}
+ 	mapit_free(iter);
+ 	script_pushint(st, size);
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -12889,6 +13037,7 @@ BUILDIN_FUNC(getequipcardcnt)
 	script_pushint(st,count);
 	return SCRIPT_CMD_SUCCESS;
 }
+
 // Judas Tier
 BUILDIN_FUNC(tpoint)
 {
@@ -14272,6 +14421,150 @@ BUILDIN_FUNC(petskillsupport)
 	else
 		pd->s_skill->timer = add_timer(gettick()+pd->s_skill->delay*1000,pet_skill_support_timer,sd->bl.id,0);
 	return SCRIPT_CMD_SUCCESS;
+}
+
+/*==========================================
+* Judas Request - Reward
+*------------------------------------------*/
+BUILDIN_FUNC(reward)
+{
+	TBL_PC *sd;
+
+	if (!script_nick2sd(2, sd))
+		return SCRIPT_CMD_FAILURE;
+
+	int item_id = 0;
+	struct item_data *item_data;
+
+	const char* itemName;
+	const char* rewardType;
+
+	if (sd == NULL)
+		return 0;
+
+	int idType = script_getnum(st, 3);
+	itemName = script_getstr(st, 4);
+	int itemAmount = script_getnum(st, 5);
+	int refine = script_getnum(st, 6);
+	int boundType = script_getnum(st, 7);
+	int rentalTime = script_getnum(st, 8);
+	int expireDays = script_getnum(st, 9);
+	rewardType = script_getstr(st, 10);
+
+	if (idType < 1 || idType > 3) {
+		script_pushint(st, -1);
+		return 1;
+	}
+
+	// Judas Reward v2
+	// Check if player belongs to guild if type 3
+	if (idType == 3) {
+		clif_displaymessage(sd->fd, "Sorry, you do not belong to a guild");
+		return 1;
+	}
+
+	// Inspect the item
+	if ((item_data = itemdb_searchname(itemName)) != NULL ||
+		(item_data = itemdb_exists(atoi(itemName))) != NULL)
+		item_id = item_data->nameid;
+
+	int foundit = 0;
+
+	for (int i = 0; i < rdx.reward_count; i++) {
+		if (item_id == rdx.rewards[i]->id) {
+			foundit = 1;
+			break;
+		}
+	}
+
+	if (foundit == 0) {
+		script_pushint(st, -1);
+		return 1;
+	}
+	// Check the amount
+	if (itemAmount < 1 || itemAmount > battle_config.reward_amount_limit) {
+		script_pushint(st, -1);
+		return 1;
+	}
+	// ID Setting Checks
+	if (item_id < 501) {
+		script_pushint(st, -1);
+		return 1;
+	}
+	int flag = 0;
+	int hasBound = 0;
+	int loop, get_count;
+	loop = 1;
+	get_count = itemAmount;
+
+	// Check Bound valid and Rental?
+	if (boundType == 0) {
+		hasBound = 0;
+	}
+	else if (boundType > 0 && boundType <= 4) {
+		hasBound = 1;
+	}
+	else {
+		script_pushint(st, -1);
+		return 1;
+	}
+
+	// If bound type is set, then num minutes should be set to 0...no rental
+	if (hasBound == 1) {
+		rentalTime = 0;
+	}
+
+	if (rentalTime > battle_config.reward_rent_limit) {
+		script_pushint(st, -1);
+		return 1;
+	}
+
+	// Item Validation with supplied params
+	// Within also contains when refine applies or not
+	if (!itemdb_isstackable2(item_data)) {
+		if (hasBound && (item_data->type == IT_PETEGG || item_data->type == IT_PETARMOR)) {
+			script_pushint(st, -1);
+			return 1;
+		}
+		loop = itemAmount;
+		get_count = 1;
+		if (item_data->type == IT_PETEGG) {
+			refine = 0;
+		}
+		if (item_data->type == IT_PETARMOR)
+			refine = 0;
+	}
+	else {
+		refine = 0;
+	}
+
+	// Check the refinement if it exceed the limit.
+	if (refine > MAX_REFINE) {
+		script_pushint(st, -1);
+		return 1;
+	}
+	else {
+		refine = cap_value(refine, 0, MAX_REFINE);
+	}
+
+	// Set expire days
+	// Maybe we can add battle config to increase and decrease the day(s). set (OK)
+	if (expireDays > battle_config.reward_exp_limit) {
+		clif_displaymessage(sd->fd, "Invalid amount of day(s) for expiration.");
+		return 1;
+	}
+	else if (expireDays == 0) {
+		expireDays = battle_config.reward_exp_limit;	// battle config reward_default_exp_day
+	}
+
+	// All good, so let's send to char server
+	// Send request to char server....(Character name will be checked here too, like if it exists, etc)
+	// Params -
+	// Awarder ID, Awarder Name, Reward Type, Date Added (Expire), Character Name, ID Type, Item ID, Item Amount, Refine, Bound Type, Rental Time
+	struct npc_data *nd = map_id2nd(st->oid);
+	chrif_process_reward(nd->class_, nd->name, rewardType, expireDays, sd->status.name, idType, item_id, itemAmount, refine, boundType, rentalTime);
+
+	return 0;
 }
 
 /*==========================================
@@ -23832,8 +24125,8 @@ BUILDIN_FUNC(sellitem) {
 	int i = 0, id;
 	int value = 0;
 	int qty = 0;
-	int rental = 0; // Judas Bound/Rental
-	int bound = 0; // Judas Bound/Rental
+	int rental; // Judas Bound/Rental
+	int bound; // Judas Bound/Rental
 	
 	// Resolve Item
 	struct script_data *someItem = script_getdata(st, 2);
@@ -23897,7 +24190,7 @@ BUILDIN_FUNC(sellitem) {
 		if (rental >= 1) {
 			bound = 0;
 		}
-		
+
 		if (bound > 4) {
 			ShowWarning("buildin_sellitem: Can't add %s (%s/%s), bound is out of range!\n", it->name, nd->exname, nd->path);
 			return false;
@@ -23917,7 +24210,7 @@ BUILDIN_FUNC(sellitem) {
 		nd->u.scr.shop->item[i].value  = value;
 		nd->u.scr.shop->item[i].qty    = qty;
 		nd->u.scr.shop->item[i].rental = rental;
-		nd->u.scr.shop->item[i].bound = bound;
+		nd->u.scr.shop->item[i].bound  = bound;
 	}
 
 	return SCRIPT_CMD_SUCCESS;
@@ -24576,6 +24869,9 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(getequipuniqueid,"i?"),
 	BUILDIN_DEF(getequipname,"i?"),
 	BUILDIN_DEF(getbrokenid,"i?"), // [Valaris]
+	// Judas Unique
+	BUILDIN_DEF(uniqueitemdestroy, "i"),
+	BUILDIN_DEF(itemdestroy, "i"),
 	BUILDIN_DEF(repair,"i?"), // [Valaris]
 	BUILDIN_DEF(repairall,"?"),
 	BUILDIN_DEF(getequipisequiped,"i?"),
@@ -24622,6 +24918,8 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(gettime,"i"),
 	BUILDIN_DEF(gettimestr,"si?"),
 	BUILDIN_DEF(openstorage,""),
+	BUILDIN_DEF(guildopenstorage_log,"?"),
+	BUILDIN_DEF(guild_has_permission,"i?"),
 	BUILDIN_DEF(guildopenstorage,""),
 	BUILDIN_DEF(itemskill,"vi?"),
 	BUILDIN_DEF(produce,"i"),
@@ -24653,6 +24951,9 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(getmapguildusers,"si"),
 	BUILDIN_DEF(getmapusers,"s"),
 	BUILDIN_DEF(getareausers,"siiii"),
+	BUILDIN_DEF(getunits, "i?"),
+	BUILDIN_DEF2(getunits, "getmapunits", "is?"),
+	BUILDIN_DEF2(getunits, "getareaunits", "isiiii?"),
 	BUILDIN_DEF(getareadropitem,"siiiiv"),
 	BUILDIN_DEF(enablenpc,"s"),
 	BUILDIN_DEF(disablenpc,"s"),

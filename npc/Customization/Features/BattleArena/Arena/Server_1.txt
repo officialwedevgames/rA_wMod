@@ -16,26 +16,23 @@
 
 // Waiting Room NPCs
 //============================================================
-payon,80,146,5	script	Battle Arena::BA01_MAIN	4_F_JOB_KNIGHT,{
+prontera,123,84,3	script	Battle Arena::BA01_MAIN	4_F_JOB_KNIGHT,{
+	function OnUpdate;
 	end;
 	
 OnInit:
 	set .map$, "bat_b01";
 	set .BG_Min, 3;
+	set .bonus_badge, 3;
+	set .idle_time, 30;	// Seconds
 	donpcevent "BA01_MAIN::OnClear";
 	waitingroom "Haider Vs Aviator",20,"BA01_MAIN::OnJoin",1;
 	end;
 	
 	
 OnInterIfInit:
-	//-- Default Variable
-	set $@BA01BG, 0;
-	set .Aviator_Score, 0;
-	set .Haider_Score, 0;
-	bg_destroy $@BA_TEAM01_ID1; 
-	set $@BA_TEAM01_ID1, 0;
-	bg_destroy $@BA_TEAM01_ID2; 
-	set $@BA_TEAM01_ID2, 0;
+	//-- Reset Variable
+	donpcevent "BA01_MAIN::OnClear";
 	end;
 	
 	
@@ -150,21 +147,19 @@ OnJoin:
 		donpcevent "BA01_MAIN::OnSelectPlayer";
 		donpcevent "haider_respawn_warp::OnBGStart";
 		donpcevent "avaitor_respawn_warp::OnBGStart";
-		donpcevent "BA01_MAIN::OnCheckMap";		
-		announce "Battle Arena has started. Proceed to payon(80,146) to join the match.",bc_all,"0xFFA500";
+		donpcevent "BA01_MAIN::OnCheckMap";	
+		donpcevent "BA01_MAIN::OnCheckIdle";		
+		announce "Battle Arena has started. Proceed to prontera(123,84) to join the match.",bc_all,"0xFFA500";
 		initnpctimer;
 	}
 	end;
 	
-OnHaiderQuit:
-	if( $@BA01BG == 1 ){
-		if(checkquest(8511,PLAYTIME) == 2){
-			erasequest 8511;
-		}
-		setquest 8511;
-		bg_leave;
+OnPCKillEvent:
+	if( $@BA01BG == 1 && strcharinfo(3) == .map$){
+		OnUpdate(getcharid(0),"ADD",1);
 	}
 end;
+
 	
 OnPCLogoutEvent:
 	if( $@BA01BG == 1 && strcharinfo(3) == .map$){
@@ -172,9 +167,21 @@ OnPCLogoutEvent:
 			erasequest 8511;
 		}
 		setquest 8511;
+		OnUpdate(getcharid(0),"SUB",50);
 		bg_leave;
 		set bastatus, 0;
 		atcommand "@channel leave #battlearena";
+	}
+end;
+
+OnHaiderQuit:
+	if( $@BA01BG == 1 ){
+		if(checkquest(8511,PLAYTIME) == 2){
+			erasequest 8511;
+		}
+		setquest 8511;
+		OnUpdate(getcharid(0),"SUB",50);
+		bg_leave;
 	}
 end;
 
@@ -183,6 +190,8 @@ OnHaiderDie:
 	{
 		set .Aviator_Score, .Aviator_Score + 1;
 		bg_updatescore .map$,.Haider_Score,.Aviator_Score;
+		.@r = rand(1,3);
+		OnUpdate(getcharid(0),"SUB",.@r);
 		sleep2 1000;
 		percentheal 100,100;
 	}
@@ -194,6 +203,7 @@ OnAviatorQuit:
 			erasequest 8511;
 		}
 		setquest 8511;
+		OnUpdate(getcharid(0),"SUB",50);
 		bg_leave;
 	}
 end;
@@ -201,10 +211,14 @@ end;
 OnAviatorDie:
 	if( $@BA01BG == 1 )
 	{
+	
 		set .Haider_Score, .Haider_Score + 1;
 		bg_updatescore .map$,.Haider_Score,.Aviator_Score;
+		.@r = rand(1,3);
+		OnUpdate(getcharid(0),"SUB",.@r);
 		sleep2 3000;
 		percentheal 100,100;
+		
 	}
 	end;
 
@@ -286,7 +300,8 @@ OnTimer300000:
 				if(vip_status(VIP_STATUS_ACTIVE)){
 					set .@bonus, 2;
 				}
-				getitem 7773,1 + .@bonus;
+				getitem 7773, .bonus_badge + 1 + .@bonus;
+				OnUpdate(getcharid(0),"DRAW",0);
 			}
 			if(checkquest(8511,PLAYTIME) <= 2){
 				erasequest 8511;
@@ -305,7 +320,8 @@ OnTimer300000:
 				if(vip_status(VIP_STATUS_ACTIVE)){
 					set .@bonus, 2;
 				}
-				getitem 7773,1 + .@bonus;
+				getitem 7773, .bonus_badge + 1 + .@bonus;
+				OnUpdate(getcharid(0),"DRAW",0);
 			}
 			if(checkquest(8511,PLAYTIME) <= 2){
 				erasequest 8511;
@@ -324,8 +340,70 @@ OnTimer300000:
 	}
 	end;
 	
+OnCheckIdle:
+	if($@BA01BG == 1){
+		bg_get_data($@BA_TEAM01_ID1,1);
+		//$@arenamembers
+		for(set .@i,0; .@i < getarraysize($@arenamembers); set .@i,.@i+1) {
+			attachrid($@arenamembers[.@i]);
+			
+			if(@idle_player >= .idle_time){
+				if(checkquest(8511,PLAYTIME) == 2){
+					erasequest 8511;
+				}
+				setquest 8511;
+				set @idle_player, 0;
+				channel_chat("#battlearena", strcharinfo(0)+" has been kicked for being AFK of "+.idle_time+" seconds.");
+				warp "SavePoint",0,0;
+				OnUpdate(getcharid(0),"SUB",10);
+				bg_leave;
+				atcommand "@channel leave #battlearena";
+			}else{
+				if(checkidle()){
+					set @idle_player, @idle_player + 1;
+				}else{
+					set @idle_player, 0;
+				}
+			}
+			
+			detachrid;
+		}
+		deletearray $@arenamembers;
+		
+		bg_get_data($@BA_TEAM01_ID2,1);
+		//$@arenamembers
+		for(set .@k,0; .@k < getarraysize($@arenamembers); set .@k,.@k+1) {
+			attachrid($@arenamembers[.@k]);
+			
+			if(@idle_player >= .idle_time){
+				if(checkquest(8511,PLAYTIME) == 2){
+					erasequest 8511;
+				}
+				setquest 8511;
+				set @idle_player, 0;
+				channel_chat("#battlearena", strcharinfo(0)+" has been kicked for being AFK of "+.idle_time+" seconds.");
+				warp "SavePoint",0,0;
+				OnUpdate(getcharid(0),"SUB",10);
+				bg_leave;
+				atcommand "@channel leave #battlearena";
+			}else{
+				if(checkidle()){
+					set @idle_player, @idle_player + 1;
+				}else{
+					set @idle_player, 0;
+				}
+			}
+			
+			detachrid;
+		}
+		deletearray $@arenamembers;
+		sleep 1000;
+		donpcevent "BA01_MAIN::OnCheckIdle";
+	}
+	end;
 	
 OnHaiderWin:
+	.@r = rand(5,10);
 	bg_get_data($@BA_TEAM01_ID1,1);
 	//$@arenamembers
 	for(set .@i,0; .@i < getarraysize($@arenamembers); set .@i,.@i+1) {
@@ -334,7 +412,8 @@ OnHaiderWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773,3 + .@bonus;
+			getitem 7773, .bonus_badge + 3 + .@bonus;
+			OnUpdate(getcharid(0),"WIN",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
 			erasequest 8511;
@@ -353,7 +432,8 @@ OnHaiderWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773,1 + .@bonus;
+			getitem 7773, .bonus_badge + 1 + .@bonus;
+			OnUpdate(getcharid(0),"LOSS",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
 			erasequest 8511;
@@ -372,7 +452,7 @@ OnHaiderWin:
 	end;
 
 OnAviatorWin:
-
+	.@r = rand(5,10);
 	bg_get_data($@BA_TEAM01_ID1,1);
 	//$@arenamembers
 	for(set .@i,0; .@i < getarraysize($@arenamembers); set .@i,.@i+1) {
@@ -381,7 +461,8 @@ OnAviatorWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773,1 + .@bonus;
+			getitem 7773, .bonus_badge + 1 + .@bonus;
+			OnUpdate(getcharid(0),"LOSS",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
 			erasequest 8511;
@@ -400,7 +481,8 @@ OnAviatorWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773,3 + .@bonus;
+			getitem 7773, .bonus_badge + 3 + .@bonus;
+			OnUpdate(getcharid(0),"WIN",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
 			erasequest 8511;
@@ -426,7 +508,7 @@ OnClear:
 	set $@BA_TEAM01_ID1, 0;
 	bg_destroy $@BA_TEAM01_ID2; 
 	set $@BA_TEAM01_ID2, 0;
-	mapwarp .map$,"payon",70,100;
+	mapwarp .map$,"prontera",116,73;
 	//maprespawnguildid .map$,0,3; // Just in case someone else
 	bg_updatescore .map$,0,0;
 	donpcevent "haider_respawn_warp::OnBGStop";
@@ -437,6 +519,20 @@ OnClear:
 	set $@BA01BG, 0;
 	end;
 	
+	function	OnUpdate	{
+		if(getarg(1) == "LOSS"){
+			query_sql "UPDATE `pvp_arena_char_stats` SET `loss` = `loss` + 1, `points` = `points` - "+getarg(2)+" WHERE `char_id` = '"+getarg(0)+"'";
+		}else if(getarg(1) == "WIN"){
+			query_sql "UPDATE `pvp_arena_char_stats` SET `win` = `win` + 1, `points` = `points` + "+getarg(2)+" WHERE `char_id` = '"+getarg(0)+"'";
+		}else if(getarg(1) == "DRAW"){
+			query_sql "UPDATE `pvp_arena_char_stats` SET `draw` = `draw` + 1, `points` = `points` + "+getarg(2)+" WHERE `char_id` = '"+getarg(0)+"'";
+		}else if(getarg(1) == "ADD"){
+			query_sql "UPDATE `pvp_arena_char_stats` SET `points` = `points` + "+getarg(2)+" WHERE `char_id` = '"+getarg(0)+"'";
+		}else if(getarg(1) == "SUB"){
+			query_sql "UPDATE `pvp_arena_char_stats` SET `points` = `points` - "+getarg(2)+" WHERE `char_id` = '"+getarg(0)+"'";
+		}
+		return;
+	}
 }
 
 // *********************************************************************

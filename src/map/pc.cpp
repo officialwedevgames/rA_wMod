@@ -2511,6 +2511,115 @@ void pc_itemgrouphealrate(struct map_session_data *sd, uint16 group_id, short ra
 	sd->itemgrouphealrate[sd->itemgrouphealrate_count++] = entry;
 }
 
+/*==========================================
+Item Removal
+*------------------------------------------*/
+void pc_itemdestroy(int nameid, bool char_server)
+{
+	struct s_storage *gstor = NULL;
+	struct map_session_data *sd;
+	struct s_mapiterator* iter;
+	int index;
+	iter = mapit_getallusers();
+ 	// Deletes from database
+	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", "inventory", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", "cart_inventory", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", "storage", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", "guild_storage", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", "mail_attachments", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	for (sd = (TBL_PC*)mapit_first(iter); mapit_exists(iter); sd = (TBL_PC*)mapit_next(iter))
+	{
+		gstor = guild2storage2(sd->status.guild_id);
+ 		for (index = 0; index < MAX_INVENTORY; index++)
+		{ // Inventory Removal
+			if (sd->inventory.u.items_inventory[index].nameid != nameid)
+				continue;
+			pc_delitem(sd, index, sd->inventory.u.items_inventory[index].amount, 0, 0, LOG_TYPE_COMMAND);
+		}
+ 		for (index = 0; index < MAX_CART; index++)
+		{ // Cart Removal
+			if (sd->cart.u.items_cart[index].nameid != nameid)
+				continue;
+			pc_cart_delitem(sd, index, sd->cart.u.items_cart[index].amount, 0, LOG_TYPE_COMMAND);
+		}
+ 		for (index = 0; index < MAX_STORAGE; index++)
+		{ // Storage Removal
+			if (sd->storage.u.items_storage[index].nameid != nameid)
+				continue;
+			storage_delitem(sd, &sd->storage, index, sd->inventory.u.items_inventory[index].amount);
+		}
+ 		if (gstor != NULL) {
+			for (index = 0; index < MAX_GUILD_STORAGE; index++)
+			{ // Guild Storage Removal
+				if (gstor->u.items_guild[index].nameid != nameid)
+					continue;
+				storage_guild_delitem(sd, gstor, index, sd->inventory.u.items_inventory[index].amount);
+			}
+		}
+	}
+	mapit_free(iter);
+}
+ // Judas Unique
+/*==========================================
+Item Removal
+*------------------------------------------*/
+void pc_uniqueitemdestroy(int64 nameid)
+{
+	struct s_storage *gstor = NULL;
+	struct map_session_data *sd;
+	struct s_mapiterator* iter;
+	int index;
+	iter = mapit_getallusers();
+ 	// Deletes from database
+	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `unique_id` = '%lld'", "inventory", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `unique_id` = '%lld'", "cart_inventory", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `unique_id` = '%lld'", "storage", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `unique_id` = '%lld'", "guild_storage", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	if (SQL_ERROR == Sql_Query(mmysql_handle, "DELETE FROM `%s` WHERE `unique_id` = '%lld'", "mail_attachments", nameid))
+		Sql_ShowDebug(mmysql_handle);
+ 	// Wipes it from server
+	for (sd = (TBL_PC*)mapit_first(iter); mapit_exists(iter); sd = (TBL_PC*)mapit_next(iter))
+	{
+		gstor = guild2storage2(sd->status.guild_id);
+ 		for (index = 0; index < MAX_INVENTORY; index++)
+		{ // Inventory Removal
+			if (sd->inventory.u.items_inventory[index].unique_id != nameid)
+				continue;
+			pc_delitem(sd, index, sd->inventory.u.items_inventory[index].amount, 0, 0, LOG_TYPE_COMMAND);
+		}
+ 		for (index = 0; index < MAX_CART; index++)
+		{ // Cart Removal
+			if (sd->cart.u.items_cart[index].unique_id != nameid)
+				continue;
+			pc_cart_delitem(sd, index, sd->cart.u.items_cart[index].amount, 0, LOG_TYPE_COMMAND);
+		}
+ 		for (index = 0; index < MAX_STORAGE; index++)
+		{ // Storage Removal
+			if (sd->storage.u.items_storage[index].unique_id != nameid)
+				continue;
+			storage_delitem(sd, &sd->storage, index, sd->inventory.u.items_inventory[index].amount);
+		}
+ 		if (gstor != NULL) {
+			for (index = 0; index < MAX_GUILD_STORAGE; index++)
+			{ // Guild Storage Removal
+				if (gstor->u.items_guild[index].unique_id != nameid)
+					continue;
+				storage_guild_delitem(sd, gstor, index, sd->inventory.u.items_inventory[index].amount);
+			}
+		}
+	}
+	mapit_free(iter);
+}
+
 /** Clear item group heal rate from player
 * @param sd Player
 * @author Cydh
@@ -5561,22 +5670,23 @@ enum e_setpos pc_setpos(struct map_session_data* sd, unsigned short mapindex, in
 
 	if( sd->state.changemap ) { // Misc map-changing settings
 		int i;
+		unsigned short instance_id = map_getmapdata(sd->bl.m)->instance_id;
 
-		if(map_getmapdata(sd->bl.m)->instance_id && !mapdata->instance_id) {
-			bool instance_found = false;
+		if (instance_id && instance_id != mapdata->instance_id) {
 			struct party_data *p = NULL;
 			struct guild *g = NULL;
+			struct clan *cd = NULL;
 
-			if (sd->instance_id) {
+			if (sd->instance_id)
 				instance_delusers(sd->instance_id);
-				instance_found = true;
-			}
-			if (!instance_found && sd->status.party_id && (p = party_search(sd->status.party_id)) != NULL && p->instance_id) {
+			else if (sd->status.party_id && (p = party_search(sd->status.party_id)) != NULL && p->instance_id)
 				instance_delusers(p->instance_id);
-				instance_found = true;
-			}
-			if (!instance_found && sd->status.guild_id && (g = guild_search(sd->status.guild_id)) != NULL && g->instance_id)
+			else if (sd->status.guild_id && (g = guild_search(sd->status.guild_id)) != NULL && g->instance_id)
 				instance_delusers(g->instance_id);
+			else if (sd->status.clan_id && (cd = clan_search(sd->status.clan_id)) != NULL && cd->instance_id)
+				instance_delusers(cd->instance_id);
+			else
+				instance_delusers(instance_id);
 		}
 
 		sd->state.pmap = sd->bl.m;

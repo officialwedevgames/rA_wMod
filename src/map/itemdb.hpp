@@ -790,7 +790,15 @@ struct s_roulette_db {
 	int *flag[MAX_ROULETTE_LEVEL]; /// Whether the item is for loss or win
 	int items[MAX_ROULETTE_LEVEL]; /// Number of items in the list for each
 };
+
 extern struct s_roulette_db rd;
+// Judas Request
+struct item_reward {
+	unsigned short id;
+	struct item_reward **rewards;
+	unsigned short reward_count;
+};
+extern struct item_reward rdx;
 
 ///Main item data struct
 struct item_data

@@ -1167,6 +1167,12 @@ void initChangeTables(void)
 	StatusIconChangeTable[SC_GLASTHEIM_ITEMDEF] = EFST_GLASTHEIM_ITEMDEF;
 	StatusIconChangeTable[SC_GLASTHEIM_HPSP] = EFST_GLASTHEIM_HPSP;
 
+	// Nightmare Biolab
+	StatusIconChangeTable[SC_LHZ_DUN_N1] = EFST_LHZ_DUN_N1;
+	StatusIconChangeTable[SC_LHZ_DUN_N2] = EFST_LHZ_DUN_N2;
+	StatusIconChangeTable[SC_LHZ_DUN_N3] = EFST_LHZ_DUN_N3;
+	StatusIconChangeTable[SC_LHZ_DUN_N4] = EFST_LHZ_DUN_N4;
+
 	StatusIconChangeTable[SC_ANCILLA] = EFST_ANCILLA;
 
 	/* Other SC which are not necessarily associated to skills */
@@ -2457,10 +2463,12 @@ unsigned short status_base_atk(const struct block_list *bl, const struct status_
 		str = status->str;
 		dex = status->dex;
 	}
+
 	/** [Skotlex]
 	* Normally only players have base-atk, but homunc have a different batk
 	* equation, hinting that perhaps non-players should use this for batk.
 	**/
+
 #ifdef RENEWAL
 	if (bl->type == BL_HOM)
 		str = 2 * ((((TBL_HOM*)bl)->homunculus.level) + status_get_homstr(bl));
@@ -2476,6 +2484,7 @@ unsigned short status_base_atk(const struct block_list *bl, const struct status_
 #else
 		str+= dex/5 + status->luk/5;
 #endif
+
 	return cap_value(str, 0, USHRT_MAX);
 }
 
@@ -2594,10 +2603,10 @@ void status_calc_misc(struct block_list *bl, struct status_data *status, int lev
 		status->mdef2 = cap_value(stat, 0, SHRT_MAX);
 	}
 
+
 	// MAtk
 	status->matk_min = status->matk_max = status_base_matk(bl, status, level);
-
-	///! TODO: Confirm these RENEWAL calculations. Currently is using previous calculation before 083cf5d9 (issue: #321) and until re/mob_db.txt is updated.
+ 	///! TODO: Confirm these RENEWAL calculations. Currently is using previous calculation before 083cf5d9 (issue: #321) and until re/mob_db.txt is updated.
 	//switch (bl->type) {
 	//	case BL_MOB:
 	//		status->matk_min += 70 * ((TBL_MOB*)bl)->status.rhw.atk2 / 100;
@@ -4401,7 +4410,6 @@ int status_calc_elemental_(struct elemental_data *ed, enum e_status_calc_opt opt
 		status->sp = ele->sp;
 		status->rhw.atk = ele->atk;
 		status->rhw.atk2 = ele->atk2;
-
 		status->matk_min += ele->matk;
 		status->def += ele->def;
 		status->mdef += ele->mdef;
@@ -9384,6 +9392,10 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 			case SC_ARMOR_ELEMENT_WIND:
 			case SC_ARMOR_RESIST:
 			case SC_ATTHASTE_CASH:
+			case SC_LHZ_DUN_N1:
+			case SC_LHZ_DUN_N2:
+			case SC_LHZ_DUN_N3:
+			case SC_LHZ_DUN_N4:
 				break;
 			case SC_GOSPEL:
 				 // Must not override a casting gospel char.
@@ -11876,6 +11888,10 @@ int status_change_clear(struct block_list* bl, int type)
 			case SC_GEFFEN_MAGIC1:
 			case SC_GEFFEN_MAGIC2:
 			case SC_GEFFEN_MAGIC3:
+			case SC_LHZ_DUN_N1:
+			case SC_LHZ_DUN_N2:
+			case SC_LHZ_DUN_N3:
+			case SC_LHZ_DUN_N4:
 			// Costumes
 			case SC_MOONSTAR:
 			case SC_SUPER_STAR:
@@ -13902,6 +13918,10 @@ void status_change_clear_buffs(struct block_list* bl, uint8 type)
 			case SC_GEFFEN_MAGIC1:
 			case SC_GEFFEN_MAGIC2:
 			case SC_GEFFEN_MAGIC3:
+			case SC_LHZ_DUN_N1:
+			case SC_LHZ_DUN_N2:
+			case SC_LHZ_DUN_N3:
+			case SC_LHZ_DUN_N4:
 			// Clans
 			case SC_CLAN_INFO:
 			case SC_SWORDCLAN:

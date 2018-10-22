@@ -6045,13 +6045,13 @@
 	export_constant_npc(JT_4_F_SE_SUN);
 	export_constant_npc(JT_4_M_SE_MOON);
 	export_constant_npc(JT_4_M_SE_STAR);
-	export_constant_npc(JT_4_EP17_KAYA);
-	export_constant_npc(JT_4_EP17_AS);
-	export_constant_npc(JT_4_EP17_ELYUMINA);
-	export_constant_npc(JT_4_EP17_MORNING);
-	export_constant_npc(JT_4_EP17_MIGUEL);
-	export_constant_npc(JT_4_EP17_NIHIL_K);
-	export_constant_npc(JT_4_EP17_MIGUEL_D);
+	export_constant_npc(JT_4_EP18_KAYA);
+	export_constant_npc(JT_4_EP18_AS);
+	export_constant_npc(JT_4_EP18_ELYUMINA);
+	export_constant_npc(JT_4_EP18_MORNING);
+	export_constant_npc(JT_4_EP18_MIGUEL);
+	export_constant_npc(JT_4_EP18_NIHIL_K);
+	export_constant_npc(JT_4_EP18_MIGUEL_D);
 	export_constant_npc(JT_4_ED_SCHMIDT);
 	export_constant_npc(JT_4_ED_OSCAR);
 	export_constant_npc(JT_4_ED_ORB);
@@ -7293,6 +7293,7 @@
 	export_constant(BL_PET);
 	export_constant(BL_HOM);
 	export_constant(BL_MER);
+	export_constant(BL_NPC);
 	export_constant(BL_ELEM);
 
 	/* skill damage mapflag types */
@@ -7302,6 +7303,16 @@
 	export_constant(SKILLDMG_OTHER);
 	export_constant(SKILLDMG_MAX);
 	export_constant(SKILLDMG_CASTER);
+	
+	/* guild permissions */
+	export_constant(GUILD_PERM_INVITE);
+	export_constant(GUILD_PERM_EXPEL);
+	export_constant(GUILD_PERM_STORAGE);
+	export_constant(GUILD_PERM_ALL);
+ 	/* guild storage log */
+	export_constant(GUILDSTORAGE_LOG_FINAL_SUCCESS);
+	export_constant(GUILDSTORAGE_LOG_EMPTY);
+	export_constant(GUILDSTORAGE_LOG_FAILED);
 
 	#undef export_constant
 	#undef export_constant2
