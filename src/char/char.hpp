@@ -14,6 +14,7 @@
 
 extern int login_fd; //login file descriptor
 extern int char_fd; //char file descriptor
+extern struct judas_points *jpoints; // Judas DB
 
 #define MAX_STARTPOINT 5
 #define MAX_STARTITEM 32
@@ -44,6 +45,11 @@ enum e_char_del_response {
 	CHAR_DELETE_GUILD,
 	CHAR_DELETE_PARTY,
 	CHAR_DELETE_TIME,
+};
+
+extern struct judas_points *jDB;
+ struct char_interface {
+	struct judas_points *jpoints; // Judas DB
 };
 
 struct Schema_Config {
@@ -89,6 +95,9 @@ struct Schema_Config {
 	char clan_table[DB_NAME_LEN];
 	char clan_alliance_table[DB_NAME_LEN];
 	char achievement_table[DB_NAME_LEN];
+	// Judas Points
+	char points_account_db[32] = "points_account_db";
+	char points_char_db[32] = "points_char_db";
 };
 extern struct Schema_Config schema_config;
 
@@ -330,4 +339,5 @@ const char* char_msg_txt(int msg_number);
 void char_do_final_msg(void);
 bool char_config_read(const char* cfgName, bool normal);
 
+extern struct char_interface *chr;
 #endif /* CHAR_HPP */
