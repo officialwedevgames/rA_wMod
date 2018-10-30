@@ -89,7 +89,7 @@ OnSellItem:
 						mes "^777777-- stopping --^000000";
 					}
 					if( (getarraysize(.@itemid) - .@i) <= 20 ){
-						.@slow += 200;
+						.@slow += 10;
 					} 
 					set @cc$, ""+.@itemid[.@i];
 					cutin @cc$,3;
@@ -122,11 +122,9 @@ OnSellItem:
 	end;
 
 OnProcess:
-		//set .@chance, rand(1,9999);
-		set .@chance, 10000;
+		set .@chance, rand(1,10000);
 
 		query_sql("SELECT `chance_rate` FROM `card_merge_db` WHERE `enable` = 1 AND `chance_rate` >= '"+.@chance+"' ORDER BY `chance_rate` ASC LIMIT 1", .@rate);
-		dispbottom .@rate;
 		if(.@rate[0]){
 			query_sql("SELECT `itemid` FROM `card_merge_db` WHERE `enable` = 1 AND `chance_rate` = '"+.@rate[0]+"'", .@itemid);
 			set .@size, getarraysize(.@itemid);
@@ -148,7 +146,6 @@ OnProcess:
 				if(.@ann){ 
 					announce "Citizens of Midgard,Lady Luck shines upon ["+strcharinfo(0)+"]!! [Card Recycler] has awarded the player with ["+getitemname(@itemid)+"]",0;
 				}
-				dispbottom "A";
 				return;
 			}else if(.@size == 1){
 			
@@ -166,7 +163,6 @@ OnProcess:
 				if(.@ann){
 					announce "Citizens of Midgard,Lady Luck shines upon ["+strcharinfo(0)+"]!! [Card Recycler] has awarded the player with ["+getitemname(@itemid)+"]",0;
 				}
-				dispbottom "B";
 				return;
 			}
 		}

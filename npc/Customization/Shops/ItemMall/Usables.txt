@@ -4,19 +4,10 @@ OnInit:
 	tradertype("NST_CASH");
 	
 	sellitem "Dimensional_Key2",17;
-	sellitem "Dark_Magician_Scroll",300;
-	sellitem "Dark_Sword_Scroll",300;
-	sellitem "Copper_Coin",50;
+	sellitem "Copper_Coin",100;
 	sellitem "Sg_Blue_Potion_Box",50;
-	sellitem "Basic_Siege_Supply_Box",10;
-	sellitem "Adv_Siege_Supply_Box",30;
 	sellitem "Elite_Siege_Supply_Box",50;
 	sellitem "Acidbomb_10_Box",75;
-	sellitem "Blue_Gemstone_Box_10",3;
-	sellitem "Red_Gemstone_Box_10",5;
-	sellitem "Yellow_Gemstone_Box_10",7;
-	sellitem "Blessing_10_Scroll_Box",50;
-	sellitem "Inc_Agi_10_Scroll_Box",50;
 	sellitem "Battle_Manual_Box2",350;
 	sellitem "Bubble_Gum_Box",350;
 	sellitem "Kafra_Card_Box",125;
@@ -32,10 +23,8 @@ OnInit:
 	sellitem "Vit_Dish10_",200;
 	sellitem "Spark_Candy_Box10",500;
 	sellitem "Infinity_Treasure_Chest",300;
-	sellitem "Clothing_Dye_Coupon",250;
-	//sellitem "Clothing_Dye_Coupon_II",150;
 	sellitem "Premium_Reset_Stone",500;
-	sellitem "Neuralizer_Box",2500;
+	sellitem "Neuralizer_Box",2000;
 	sellitem "Max_Weight_Up_Box",5000;
 	end;
 }

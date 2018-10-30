@@ -23,7 +23,7 @@ prontera,123,84,3	script	Battle Arena::BA01_MAIN	4_F_JOB_KNIGHT,{
 OnInit:
 	set .map$, "bat_b01";
 	set .BG_Min, 3;
-	set .bonus_badge, 3;
+	set .bonus_badge, 0;
 	set .idle_time, 30;	// Seconds
 	donpcevent "BA01_MAIN::OnClear";
 	waitingroom "Haider Vs Aviator",20,"BA01_MAIN::OnJoin",1;
@@ -356,8 +356,9 @@ OnCheckIdle:
 				channel_chat("#battlearena", strcharinfo(0)+" has been kicked for being AFK of "+.idle_time+" seconds.");
 				warp "SavePoint",0,0;
 				OnUpdate(getcharid(0),"SUB",10);
-				bg_leave;
 				atcommand "@channel leave #battlearena";
+				bg_leave;
+				
 			}else{
 				if(checkidle()){
 					set @idle_player, @idle_player + 1;
@@ -384,8 +385,8 @@ OnCheckIdle:
 				channel_chat("#battlearena", strcharinfo(0)+" has been kicked for being AFK of "+.idle_time+" seconds.");
 				warp "SavePoint",0,0;
 				OnUpdate(getcharid(0),"SUB",10);
-				bg_leave;
 				atcommand "@channel leave #battlearena";
+				bg_leave;
 			}else{
 				if(checkidle()){
 					set @idle_player, @idle_player + 1;

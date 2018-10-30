@@ -164,6 +164,7 @@ OnDoCheck:
 			}else if(.@users == 1){
 				mapannounce .lms_map$,"[Event] Portal has appeared.",16;
 				set .lms_status,0;
+				stopnpctimer "Kills_Con";
 				enablenpc "LMS_Rewards";
 				end;
 			}
@@ -211,6 +212,7 @@ OnPCKillEvent:
 			sleep2 2000;
 			if(getmapusers(.lms_map$) == 1){
 				mapannounce .lms_map$,"[Event] Portal has appeared.",16;
+				stopnpctimer "Kills_Con";
 				enablenpc "LMS_Rewards";
 			}else if(getmapusers(.lms_map$) == 2){
 					sleep2 3000;
