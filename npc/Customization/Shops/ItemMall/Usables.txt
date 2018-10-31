@@ -4,7 +4,7 @@ OnInit:
 	tradertype("NST_CASH");
 	
 	sellitem "Dimensional_Key2",17;
-	sellitem "Copper_Coin",100;
+	sellitem "Copper_Coin",300;
 	sellitem "Sg_Blue_Potion_Box",50;
 	sellitem "Elite_Siege_Supply_Box",50;
 	sellitem "Acidbomb_10_Box",75;

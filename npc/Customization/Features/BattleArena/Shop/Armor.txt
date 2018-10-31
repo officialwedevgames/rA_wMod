@@ -1,7 +1,6 @@
 prontera,123,82,3	trader	Liza	4_F_JOB_BLACKSMITH,{
 OnInit:
 	tradertype("NST_CUSTOM");
-	sellitem "c_potion_bundle",2,0,1;
 	sellitem "Letter_Challenge_Box",75,0,0;
 	sellitem "Fragment_Box",200,0,0;
 	sellitem "Upg_Katar",300,0,0;
