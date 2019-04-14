@@ -1,0 +1,11 @@
+prontera,146,75,5	trader2	Event Manager	4_M_ZONDAOYAJI,{
+
+OnInit:
+	waitingroom "Event Shop",0;
+	sellitem "Adventurer_Coin",15000,0,1;
+	sellitem "Clothing_Dye_Coupon",5000000;
+	sellitem "Neuralizer",15000000;
+	sellitem "Premium_Reset_Stone",25000000;
+end;
+
+}

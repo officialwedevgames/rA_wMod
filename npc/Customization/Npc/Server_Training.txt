@@ -1,0 +1,96 @@
+-	script	Server_Opening	-1,{
+
+OnInit:
+	setwall "new_1-1",68,110,4,0,0,"start_wall1";
+	setwall "new_1-1",70,110,4,0,0,"start_wall2";
+	monster "new_1-1",69,110,"Barricade",1905,1;
+	monster "new_1-1",69,111,"Barricade",1905,1;
+	monster "new_1-1",69,112,"Barricade",1905,1;
+	monster "new_1-1",69,113,"Barricade",1905,1;
+	bindatcmd "serveraddwall", "Server_Opening::OnWallDeploy", 99,100;
+	bindatcmd "serverremovewall", "Server_Opening::OnWallBreak", 99,100;
+end;
+
+
+OnWallDeploy:
+	setwall "new_1-1",68,110,4,0,0,"start_wall1";
+	setwall "new_1-1",70,110,4,0,0,"start_wall2";
+	monster "new_1-1",69,110,"Barricade",1905,1;
+	monster "new_1-1",69,111,"Barricade",1905,1;
+	monster "new_1-1",69,112,"Barricade",1905,1;
+	monster "new_1-1",69,113,"Barricade",1905,1;
+	end;
+
+OnWallBreak:
+	delwall "start_wall1";
+	delwall "start_wall2";
+	killmonsterall "new_1-1";
+	donpcevent "Respawn::OnInit";
+	end;
+
+}
+
+-	script	disable_npc_novice	-1,{
+	OnInit:
+	OnInterIfInit:
+		atcommand "@unloadnpcfile npc/EP15/Jobs/novice/novice.txt";
+	end;
+}
+
+new_1-1,135,135,10,10	monster	Poring	1002,30,0,0,0
+new_1-1,135,93,10,10	monster	Lunatic	1063,30,0,0,0
+
+new_1-1,146,111,2	script	Alexandrine	4_M_04,{
+	mes "[ Alexandrine ]";
+	mes "Hello Adventurer, How can I help you?";
+	next;
+	switch(select("Tell me more about jellopy's and feather's")){
+		case 1:
+			mes "[ Alexandrine ]";
+			if(countitem("Jellopy") < 100 || countitem("Feather") < 50){
+				mes "Welcome Adventurer! Bring me 100 jellopy's and 50 feather's but don't worry there's a reward.";
+				close;
+			}
+			if(countitem("Jellopy") < 100 || countitem("Feather") < 50){
+				mes "Well, you don't have enough items that I needed.";
+			}else{
+				if(training_ground){
+					delitem "Jellopy",100;
+					delitem "Feather",50;
+					@rand = rand(getarraysize(.itemlist));
+					getitembound .itemlist[@rand],1,4;
+					getitembound 12208,5,4;
+					getitembound 12210,5,4;
+					set training_ground,1;
+				}
+				if(!quest_1_completed){
+					getitem 32375,5;
+					getitem 12215,15;
+					getitem 12216,15;
+					getitem 7059,20;
+					getitem 7060,20;
+					rentitem "Newbie_Sign",1,1440;
+					set #quest_1_completed,1;
+				}
+
+				mes "Congratulations! You just received ^ff0000"+getitemname("Newbie_Sign")+"^000000 that may help you in your journey!";
+				savepoint "prontera",116,73;
+				warp "prontera",116,73;
+			}
+			close;
+	}
+	close;
+
+
+	OnInit:
+		setarray .itemlist,
+				19533,		//- Costume Spore Hat
+				19539,		//- Costume Reginleif Hairband
+				19545,		//- Costume Boy's Cap
+				19549,		//- Costume Magestic Goat
+				19579;		//- Costume Red Wind Hat
+		questinfo 2, QTYPE_QUEST, 0;
+
+	end;
+
+}

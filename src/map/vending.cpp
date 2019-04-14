@@ -10,6 +10,7 @@
 #include "../common/showmsg.hpp" // ShowInfo
 #include "../common/strlib.hpp"
 #include "../common/timer.hpp"  // DIFF_TICK
+#include "../common/utils.hpp"  // DIFF_TICK
 
 #include "achievement.hpp"
 #include "atcommand.hpp"
@@ -301,7 +302,7 @@ int8 vending_openvending(struct map_session_data* sd, const char* message, const
 	int vending_skill_lvl;
 	char message_sql[MESSAGE_SIZE*2];
 	StringBuf buf;
-	
+
 	nullpo_retr(false,sd);
 
 	if ( pc_isdead(sd) || !sd->state.prevend || pc_istrading(sd)) {
@@ -309,7 +310,7 @@ int8 vending_openvending(struct map_session_data* sd, const char* message, const
 	}
 
 	vending_skill_lvl = pc_checkskill(sd, MC_VENDING);
-	
+
 	// skill level and cart check
 	if( !vending_skill_lvl || !pc_iscarton(sd) ) {
 		clif_skill_fail(sd, MC_VENDING, USESKILL_FAIL_LEVEL, 0);
@@ -341,6 +342,9 @@ int8 vending_openvending(struct map_session_data* sd, const char* message, const
 		||  sd->cart.u.items_cart[index].attribute == 1 // broken item
 		||  sd->cart.u.items_cart[index].expire_time // It should not be in the cart but just in case
 		||  (sd->cart.u.items_cart[index].bound && !pc_can_give_bounded_items(sd)) // can't trade account bound items and has no permission
+		||  (sd->cart.u.items_cart[index].card[0]==CARD0_CREATE && (MakeDWord(sd->cart.u.items_cart[index].card[2],sd->cart.u.items_cart[index].card[3]) ==
+		(battle_config.bg_reserved_char_id || battle_config.woe_reserved_char_id) && !battle_config.bg_can_trade))
+		// end Brian Bg Items
 		||  !itemdb_cantrade(&sd->cart.u.items_cart[index], pc_get_group_level(sd), pc_get_group_level(sd)) ) // untradeable item
 			continue;
 
@@ -364,7 +368,7 @@ int8 vending_openvending(struct map_session_data* sd, const char* message, const
 	sd->vender_id = vending_getuid();
 	sd->vend_num = i;
 	safestrncpy(sd->message, message, MESSAGE_SIZE);
-	
+
 	Sql_EscapeString( mmysql_handle, message_sql, sd->message );
 
 	if( Sql_Query( mmysql_handle, "INSERT INTO `%s`(`id`, `account_id`, `char_id`, `sex`, `map`, `x`, `y`, `title`, `autotrade`, `body_direction`, `head_direction`, `sit`) "
@@ -599,7 +603,10 @@ void do_init_vending_autotrade(void)
 				CREATE(at->sd, struct map_session_data, 1);
 				pc_setnewpc(at->sd, at->account_id, at->char_id, 0, gettick(), at->sex, 0);
 				at->sd->state.autotrade = 1|2;
-				at->sd->state.monster_ignore = (battle_config.autotrade_monsterignore);
+				if (battle_config.autotrade_monsterignore)
+					at->sd->state.block_action |= PCBLOCK_IMMUNE;
+				else
+					at->sd->state.block_action &= ~PCBLOCK_IMMUNE;
 				chrif_authreq(at->sd, true);
 				uidb_put(vending_autotrader_db, at->char_id, at);
 			}

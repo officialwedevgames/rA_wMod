@@ -92,7 +92,7 @@ struct map_session_data *inter_search_sd(uint32 account_id, uint32 char_id)
  * @param rename_flag
  * @param incubate
  * @param pet_name
- * @return 
+ * @return
  */
 int intif_create_pet(uint32 account_id,uint32 char_id,short pet_class,short pet_lv, unsigned short pet_egg_id, unsigned short pet_equip,short intimate,short hungry,char rename_flag,char incubate,char *pet_name)
 {
@@ -121,7 +121,7 @@ int intif_create_pet(uint32 account_id,uint32 char_id,short pet_class,short pet_
  * @param account_id
  * @param char_id
  * @param pet_id
- * @return 
+ * @return
  */
 int intif_request_petdata(uint32 account_id,uint32 char_id,int pet_id)
 {
@@ -141,7 +141,7 @@ int intif_request_petdata(uint32 account_id,uint32 char_id,int pet_id)
  * Request char-serv to save a pet in persistence (SQL)
  * @param account_id
  * @param p
- * @return 
+ * @return
  */
 int intif_save_petdata(uint32 account_id,struct s_pet *p)
 {
@@ -160,7 +160,7 @@ int intif_save_petdata(uint32 account_id,struct s_pet *p)
 /**
  * Request char-serv to delete the entry for this pet-char association
  * @param pet_id
- * @return 
+ * @return
  */
 int intif_delete_petdata(int pet_id)
 {
@@ -179,7 +179,7 @@ int intif_delete_petdata(int pet_id)
  * @param sd
  * @param type
  * @param name
- * @return 
+ * @return
  */
 int intif_rename(struct map_session_data *sd, int type, char *name)
 {
@@ -238,7 +238,7 @@ int intif_broadcast(const char* mes, int len, int type)
  * @param mes : Message to brodcast
  * @param len : Size of message
  * @param fontColor : color to display message
- * @param fontType : 
+ * @param fontType :
  * @param fontSize :
  * @param fontAlign :
  * @param fontY :
@@ -272,7 +272,7 @@ int intif_broadcast2(const char* mes, int len, unsigned long fontColor, short fo
  * send a message using the main chat system
  * @param sd : Player source of message
  * @param message : the message to sent
- * @return 
+ * @return
  */
 int intif_main_message(struct map_session_data* sd, const char* message)
 {
@@ -455,7 +455,7 @@ int intif_saveregistry(struct map_session_data *sd)
 					p->value[len - 1] = '\0'; //this is backward for old char-serv but new one doesn't need this
 				}
 
-				WFIFOB(inter_fd, plen) = (uint8)len; 
+				WFIFOB(inter_fd, plen) = (uint8)len;
 				plen += 1;
 
 				safestrncpy(WFIFOCP(inter_fd,plen), p->value, len);
@@ -510,7 +510,7 @@ int intif_saveregistry(struct map_session_data *sd)
  * Request the registries for this player.
  * @param sd : Player to load registry
  * @param flag : Type of registry to load, &1=acc (login-serv), &2=acc (char-serv), &4=char
- * @return 
+ * @return
  */
 int intif_request_registry(struct map_session_data *sd, int flag)
 {
@@ -573,7 +573,7 @@ bool intif_send_guild_storage(uint32 account_id, struct s_storage *gstor)
  * Party creation request
  * @param member : Struct of 1 party member
  * @param name : Party name
- * @param item : item pickup rule 
+ * @param item : item pickup rule
  * @param item2 : item share rule
  * @return 0=error, 1=msg sent
  */
@@ -616,7 +616,7 @@ int intif_request_partyinfo(int party_id, uint32 char_id)
  * Request to add a member to party
  * @param party_id : Party to add member to
  * @param member : member to add to party
- * @return 
+ * @return
  */
 int intif_party_addmember(int party_id,struct party_member *member)
 {
@@ -728,10 +728,10 @@ int intif_break_party(int party_id)
 	return 0;
 }
 
-// 
+//
 /**
  * Request sending party chat
- * (we using this in case we have multiple map-serv attached 
+ * (we using this in case we have multiple map-serv attached
  * to be sure all party get the message)
  * @param party_id : Party identification
  * @param account_id : Player sending the message
@@ -921,7 +921,7 @@ int intif_guild_memberinfoshort(int guild_id,uint32 account_id,uint32 char_id,in
 }
 
 /**
- * Guild disbanded notification 
+ * Guild disbanded notification
  * @param guild_id : guild to disband
  * @return 0=error, 1=msg_sent
  */
@@ -989,7 +989,7 @@ int intif_guild_change_basicinfo(int guild_id,int type,const void *data,int len)
 /**
  * Request a change of Guild member information
  * @param guild_id : Guild to alter
- * @param account_id : Player aid to alter 
+ * @param account_id : Player aid to alter
  * @param char_id : Player cid to alter
  * @param type : Type of modification
  * @param data : Value of modification
@@ -1060,7 +1060,7 @@ int intif_guild_skillup(int guild_id, uint16 skill_id, uint32 account_id, int ma
  * Request a new guild relationship
  * @param guild_id1 : Guild to associate 1
  * @param guild_id2 : Guild to associate 2
- * @param account_id1 : aid of player in guild1 
+ * @param account_id1 : aid of player in guild1
  * @param account_id2 : aid of player in guild2
  * @param flag : (GUILD_ALLIANCE_REMOVE|0|1)
  * @return  0=error, 1=msg_sent
@@ -1105,7 +1105,7 @@ int intif_guild_notice(int guild_id,const char *mes1,const char *mes2)
  * @param guild_id
  * @param len
  * @param data
- * @return 
+ * @return
  */
 int intif_guild_emblem(int guild_id,int len,const char *data)
 {
@@ -1145,7 +1145,7 @@ int intif_guild_castle_dataload(int num, int *castle_ids)
  * @param castle_id
  * @param index
  * @param value
- * @return 
+ * @return
  */
 int intif_guild_castle_datasave(int castle_id,int index, int value)
 {
@@ -1398,7 +1398,7 @@ void intif_parse_Registers(int fd)
 
 	// have it not complain about insertion of vars before loading, and not set those vars as new or modified
 	pc_set_reg_load(true);
-	
+
 	if( RFIFOW(fd, 14) ) {
 		char key[32];
 		unsigned int index;
@@ -2007,7 +2007,7 @@ void intif_request_questlog(struct map_session_data *sd)
 {
 	if (CheckForCharServer())
 		return;
-	
+
 	WFIFOHEAD(inter_fd,6);
 	WFIFOW(inter_fd,0) = 0x3060;
 	WFIFOL(inter_fd,2) = sd->status.char_id;
@@ -2152,13 +2152,13 @@ void intif_parse_achievements(int fd)
 			CREATE(sd->achievement_data.achievements, struct achievement, num_received);
 
 		for (i = 0; i < num_received; i++) {
+			std::shared_ptr<s_achievement_db> adb = achievement_db.find( received[i].achievement_id );
 
-			if (!achievement_exists(received[i].achievement_id)) {
-				ShowError("intif_parse_achievementlog: Achievement %d not found in DB.\n", received[i].achievement_id);
+
+			if (!adb) {
+				ShowError("intif_parse_achievements: Achievement %d not found in achievement_db.\n", received[i].achievement_id);
 				continue;
 			}
-
-			auto &adb = achievement_get(received[i].achievement_id);
 
 			received[i].score = adb->score;
 
@@ -2288,10 +2288,10 @@ int intif_Mail_requestinbox(uint32 char_id, unsigned char flag, enum mail_inbox_
 }
 
 /**
- * Map-serv received a mail from char-serv 
+ * Map-serv received a mail from char-serv
  * (inform user of new mail)
  * @param fd : char-serv link
- * @return 0=msg fail, 1=msg received 
+ * @return 0=msg fail, 1=msg received
  */
 int intif_parse_Mail_inboxreceived(int fd)
 {
@@ -2494,7 +2494,7 @@ int intif_Mail_return(uint32 char_id, int mail_id)
 /**
  * Received a returned mail
  * @param fd
- * @return 
+ * @return
  */
 int intif_parse_Mail_return(int fd)
 {
@@ -2862,7 +2862,7 @@ int intif_Auction_bid(uint32 char_id, const char* name, unsigned int auction_id,
 }
 
 /**
- * Get back the money from biding auction, 
+ * Get back the money from biding auction,
  * (someone else have bid it over)
  * @param fd : char-serv link
  */
@@ -3033,7 +3033,7 @@ int intif_parse_mercenary_saved(int fd)
 
 /**
  * Request to create elemental, (verify and save on char-serv)
- * @param ele : Tmp Elemental data 
+ * @param ele : Tmp Elemental data
  * @return 0=error, 1=msg sent
  */
 int intif_elemental_create(struct s_elemental *ele)
@@ -3165,7 +3165,7 @@ int intif_request_accinfo(int u_fd, int aid, int group_lv, char* query, char typ
 
 	if( CheckForCharServer() )
 		return 0;
-	
+
 	WFIFOHEAD(inter_fd,2 + 4 + 4 + 4 + 1 + NAME_LENGTH);
 
 	WFIFOW(inter_fd,0) = 0x3007;
@@ -3318,10 +3318,10 @@ void intif_parse_broadcast_obtain_special_item(int fd) {
  */
 void intif_itembound_guild_retrieve(uint32 char_id,uint32 account_id,int guild_id) {
 	struct s_storage *gstor = guild2storage2(guild_id);
-	
+
 	if( CheckForCharServer() )
 		return;
-	
+
 	WFIFOHEAD(inter_fd,12);
 	WFIFOW(inter_fd,0) = 0x3056;
 	WFIFOL(inter_fd,2) = char_id;
@@ -3401,7 +3401,7 @@ static bool intif_parse_StorageReceived(int fd)
 
 	p = (struct s_storage *)RFIFOP(fd,10);
 
-	switch (type) { 
+	switch (type) {
 		case TABLE_INVENTORY:
 			stor = &sd->inventory;
 			break;
@@ -3649,7 +3649,7 @@ int intif_clan_member_left( int clan_id ){
 	WFIFOW(inter_fd,0) = 0x30A2;
 	WFIFOL(inter_fd,2) = clan_id;
 	WFIFOSET(inter_fd,6);
-	
+
 	return 1;
 }
 
@@ -3664,7 +3664,7 @@ int intif_clan_member_joined( int clan_id ){
 	WFIFOW(inter_fd,0) = 0x30A3;
 	WFIFOL(inter_fd,2) = clan_id;
 	WFIFOSET(inter_fd,6);
-	
+
 	return 1;
 }
 
@@ -3685,7 +3685,7 @@ int intif_parse_clan_onlinecount( int fd ){
 //-----------------------------------------------------------------
 
 /**
- * Communication from the inter server, Main entry point interface (inter<=>map) 
+ * Communication from the inter server, Main entry point interface (inter<=>map)
  * @param fd : inter-serv link
  * @return
  *  0 (unknow packet).

@@ -1,23 +1,34 @@
-//===== rAthena Script =======================================
-//= BattleGround System - BA 80-99
-//===== Description: =========================================
-//= [Official Conversion]
-//= Kreiger Von Midgard Battleground for levels 80 to 99
-//= - Winning Team: 5 points
-//= - Losing Team: 1 point
-//===== Changelogs: ==========================================
-//= 1.0 First Version. [L0ne_W0lf]
-//= 1.1 Updated using official Aegis files. [L0ne_W0lf]
-//= 1.2 Upated some announces and dialogs from iRO.
-//=     Changed how the scoreboard works slightly.
-//=     Removed the areapercentheals, and minor things.
-//============================================================
 
 
 // Waiting Room NPCs
 //============================================================
 prontera,123,84,3	script	Battle Arena::BA01_MAIN	4_F_JOB_KNIGHT,{
+
 	function OnUpdate;
+	
+	mes "[ Battle Mart ]";
+	mes "Supplies makes the battle complete. Let me open my shop.";
+	next;
+	switch( select("Usables:Equipments:Exclusive") ){
+		case 1:
+			mes "[ Battle Mart ]";
+			mes "Okay.. great choice.";
+			close2;
+			callshop "BA_Usables",4;
+		end;
+		case 2:
+			mes "[ Battle Mart ]";
+			mes "Okay.. great choice.";
+			close2;
+			callshop "BA_Equips",4;
+		end;	
+		case 3:
+			mes "[ Battle Mart ]";
+			mes "Okay.. great choice.";
+			close2;
+			callshop "BA_Exclusive",4;
+		end;
+	}
 	end;
 	
 OnInit:
@@ -300,7 +311,7 @@ OnTimer300000:
 				if(vip_status(VIP_STATUS_ACTIVE)){
 					set .@bonus, 2;
 				}
-				getitem 7773, .bonus_badge + 1 + .@bonus;
+				getitem 7773, .bonus_badge + 4 + .@bonus;
 				OnUpdate(getcharid(0),"DRAW",0);
 			}
 			if(checkquest(8511,PLAYTIME) <= 2){
@@ -320,7 +331,7 @@ OnTimer300000:
 				if(vip_status(VIP_STATUS_ACTIVE)){
 					set .@bonus, 2;
 				}
-				getitem 7773, .bonus_badge + 1 + .@bonus;
+				getitem 7773, .bonus_badge + 4 + .@bonus;
 				OnUpdate(getcharid(0),"DRAW",0);
 			}
 			if(checkquest(8511,PLAYTIME) <= 2){
@@ -413,7 +424,7 @@ OnHaiderWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773, .bonus_badge + 3 + .@bonus;
+			getitem 7773, .bonus_badge + 10 + .@bonus;
 			OnUpdate(getcharid(0),"WIN",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
@@ -433,7 +444,7 @@ OnHaiderWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773, .bonus_badge + 1 + .@bonus;
+			getitem 7773, .bonus_badge + 4 + .@bonus;
 			OnUpdate(getcharid(0),"LOSS",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
@@ -462,7 +473,7 @@ OnAviatorWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773, .bonus_badge + 1 + .@bonus;
+			getitem 7773, .bonus_badge + 4 + .@bonus;
 			OnUpdate(getcharid(0),"LOSS",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
@@ -482,7 +493,7 @@ OnAviatorWin:
 			if(vip_status(VIP_STATUS_ACTIVE)){
 				set .@bonus, 2;
 			}
-			getitem 7773, .bonus_badge + 3 + .@bonus;
+			getitem 7773, .bonus_badge + 10 + .@bonus;
 			OnUpdate(getcharid(0),"WIN",.@r);
 		}
 		if(checkquest(8511,PLAYTIME) <= 2){
@@ -554,11 +565,11 @@ OnBGStop:
 	stopnpctimer;
 	end;
 
-OnTimer15000:
+OnTimer14000:
 	specialeffect 83;
 	end;
 
-OnTimer16000:
+OnTimer15000:
 	areapercentheal .map$,2,282,17,297,100,100;
 	areawarp .map$,2,282,17,297,.map$,87,75;
 	initnpctimer;
@@ -581,11 +592,11 @@ OnBGStop:
 	stopnpctimer;
 	end;
 
-OnTimer15000:
+OnTimer14000:
 	specialeffect 83;
 	end;
 
-OnTimer16000:
+OnTimer15000:
 	areapercentheal .map$,382,2,397,17,100,100;
 	areawarp .map$,382,2,397,17,.map$,311,224;
 	initnpctimer;

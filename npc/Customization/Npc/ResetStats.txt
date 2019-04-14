@@ -25,7 +25,7 @@ mes "^009900"+getitemname(.stoneid)+" x "+.@stonesreq+"^000000 to reset all your
 next;
 set .@d$, gettimestr("%Y-%m-%d %H:%M:%S", 21);
 query_sql("SELECT `id` FROM `reset_date` WHERE `date` > '"+.@d$+"' LIMIT 1", .@available);
-switch(select("Tell me More!:Lets reset now.:[ ^FF0000EVENT^000000 ] ONCE A MONTH:"+((!.@available)?"":"[ ^FF0000EVENT^000000 ] ULIMITED RESET.:")+"Later.")) {
+switch(select("Tell me More!:Lets reset now.:"+((!.@available)?"":"[ ^FF0000EVENT^000000 ] ULIMITED RESET.:")+"Later.")) {
 	case 1:
 		mes .NpcName$;
 		for(set .@i,0; .@i<getarraysize(.minrange); set .@i,.@i+1) {
@@ -48,6 +48,7 @@ switch(select("Tell me More!:Lets reset now.:[ ^FF0000EVENT^000000 ] ONCE A MONT
 			mes "You do not have enough ^009900"+getitemname(.stoneid)+"s^000000";
 			close;
 		}
+	/*
 	case 3:
 		mes .NpcName$;	
 		if(#FreeReset > gettimetick(2)) {
@@ -69,9 +70,8 @@ switch(select("Tell me More!:Lets reset now.:[ ^FF0000EVENT^000000 ] ONCE A MONT
 		mes "You can only avail the free reset once 2 month... Thank you.";
 		resetstatus;
 		}
-
 	close;
-	
+	*/
 	case 4:
 		if(!.@available){ goto OnDueDate; end;}
 		

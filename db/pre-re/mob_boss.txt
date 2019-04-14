@@ -20,7 +20,7 @@ MOBG_Bloody_Dead_Branch,1157,Pharaoh,500000
 MOBG_Bloody_Dead_Branch,1159,Phreeoni,500000
 MOBG_Bloody_Dead_Branch,1190,Orc Lord,500000
 MOBG_Bloody_Dead_Branch,1251,Stormy Knight,500000
-MOBG_Bloody_Dead_Branch,1252,Hatii,500000
+MOBG_Bloody_Dead_Branch,1252,Garm,500000
 MOBG_Bloody_Dead_Branch,1272,Dark Lord,500000
 MOBG_Bloody_Dead_Branch,1312,Turtle General,500000
 MOBG_Bloody_Dead_Branch,1373,Lord of the Dead,500000
@@ -43,7 +43,3 @@ MOBG_Bloody_Dead_Branch,1751,Valkyrie Randgris,500000
 MOBG_Bloody_Dead_Branch,1768,Gloom Under Night,500000
 MOBG_Bloody_Dead_Branch,1779,Ktullanux,500000
 MOBG_Bloody_Dead_Branch,1785,Atroce,1000000
-MOBG_Bloody_Dead_Branch,1832,Ifrit,500000
-MOBG_Bloody_Dead_Branch,1871,Falling Bishop,500000
-MOBG_Bloody_Dead_Branch,1873,Beelzebub,500000
-MOBG_Bloody_Dead_Branch,1885,Gopinich,500000

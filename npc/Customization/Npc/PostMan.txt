@@ -1,49 +1,42 @@
 -	script	Post_Man	FAKE_NPC,{
-	
+
 	mes .n$;
 	mes "I always provide item deliveries.";
 	next;
-	switch(select("Event Box","Gift Box","Guild Box","Points Box","Share Box")) {
-	
+	switch(select("Event Box","Gift Box","Guild Box","Points Box")) {
+
 		case 1:
 			set .@mode,1;
 			.@type_mode$ = "A";
 			query_sql("SELECT `itemid`, `amount`, `refine`, `bound_type`, `rental_time`  FROM `reward_db` WHERE `id_type` = '"+.@type_mode$+"' AND `id_user` = '"+getcharid(3)+"' AND `itemid` != '0' AND `amount` != '0'",.@itemid,.@amount,.@refine,.@bound_type,.@rental_time);
 			break;
-			
+
 		case 2:
 			set .@mode,2;
 			.@type_mode$ = "C";
 			query_sql("SELECT `itemid`, `amount`, `refine`, `bound_type`, `rental_time`  FROM `reward_db` WHERE `id_type` = '"+.@type_mode$+"' AND `id_user` = '"+getcharid(0)+"' AND `itemid` != '0' AND `amount` != '0'",.@itemid,.@amount,.@refine,.@bound_type,.@rental_time);
 			break;
-			
+
 		case 3:
 			set .@mode,3;
 			.@type_mode$ = "G";
 			query_sql("SELECT `itemid`, `amount`, `refine`, `bound_type`, `rental_time`  FROM `reward_db` WHERE `id_type` = '"+.@type_mode$+"' AND `id_user` = '"+getcharid(2)+"' AND `itemid` != '0' AND `amount` != '0'",.@itemid,.@amount,.@refine,.@bound_type,.@rental_time);
 			break;
-			
+
 		case 4:
 			set .@mode,4;
 			query_sql("SELECT `var`,`name`,`amount`  FROM `reward_db_var` WHERE `account_id` = '"+getcharid(3)+"'",.@var$,.@name$,.@amount);
 			break;
-			
-		case 5:
-			set .@mode,5;
-			query_sql("SELECT `email`  FROM `login` WHERE `account_id` = '"+getcharid(3)+"'",.@email$);
-			
-			query_sql("SELECT `id`, `itemid`, `amount`, `bound_type`  FROM `social_sharing_redeem` WHERE `email` = '"+.@email$+"' AND `redeemed_status` = '0'",.@id, .@itemid, .@amount, .@bound_type);
-			break;
-			
+
 	}
-	
+
 	mes .n$;
 	if (.@mode == 4){
 			if(!getarraysize(.@var$)){
 				mes "^FF0000** ***^000000 NO AVAILABLE POINTS ^FF0000*** **^000000";
 				close;
 			}
-			mes "Select a points.";		
+			mes "Select a points.";
 			.@size = getarraysize( .@var$ );
 			for( .@i = 0; .@i < .@size; .@i++ ){
 				set .@menu$,.@menu$ +"^ff0000"+.@amount[.@i]+"^000000 "+.@name$[.@i]+":";
@@ -69,7 +62,7 @@
 			close;
 	}
 
-	if (.@mode == 3 && !getcharid(2)) {		
+	if (.@mode == 3 && !getcharid(2)) {
 		mes "Sorry you are not in a guild";
 		close;
 	}else if(.@mode == 3 && getguildmasterid( getcharid(2) ) != getcharid(0)) {
@@ -83,14 +76,11 @@
 	next;
 	.@size = getarraysize( .@itemid );
 	for( .@i = 0; .@i < .@size; .@i++ ){
-		set .@menu$,.@menu$ +" "+((.@bound_type[.@i] == 2)?"[^0000ffGuild^000000] ":"")+""+((.@refine[.@i] >= 1)?""+"+"+.@refine[.@i]+"":"")+""+getitemname( .@itemid[.@i] ) + " ["+getitemslots(.@itemid[.@i])+"] x " + .@amount[.@i] + ":";
+		set .@menu$,.@menu$ +" "+((.@bound_type[.@i] == 2)?"[^0000ffGuild^000000] ":"")+""+((.@refine[.@i] >= 1)?""+"+"+.@refine[.@i]+"":"")+""+getitemname( .@itemid[.@i] ) + " "+((getitemslots(.@itemid[.@i]) >=1 )?"["+getitemslots(.@itemid[.@i])+"]":"")+" x " + .@amount[.@i] + ":";
 	}
 	.@i = select( .@menu$ ) - 1;
-	
-	if(.@mode == 5){
-		query_sql("SELECT `id`  FROM `social_sharing_redeem` WHERE `email` = '"+.@email$+"' AND `redeemed_status` = '1' AND `id` = '"+.@id[.@i]+"'",.@st);
-	}
-	
+
+
 	if(.@bound_type[.@i] == 2 && !getcharid(2)){
 		mes .n$;
 		mes "You are not allowed to claim this reward since your are not in a guild.";
@@ -105,37 +95,35 @@
 		mes "The item is no longer available.";
 		close;
 	}
-	
+
 
 		if(.@rental_time[.@i] < 1 && .@bound_type[.@i] >= 1){
-		
+
 			getitembound2 .@itemid[.@i],.@amount[.@i],1,.@refine[.@i],0,0,0,0,0,.@bound_type[.@i];
-		
+
 		}
 		else if(.@bound_type[.@i] < 1 && .@rental_time[.@i] >= 1){
-		
-			rentitem2 .@itemid[.@i],.@amount[.@i],.@rental_time[.@i],.@refine[.@i],0,0,0,0; 
-	
+
+			rentitem2 .@itemid[.@i],.@amount[.@i],.@rental_time[.@i],.@refine[.@i],0,0,0,0;
+
 		}
 		else{
-		
+
 			getitem2 .@itemid[.@i],.@amount[.@i],1,.@refine[.@i],0,0,0,0,0;
-		
+
 		}
-		
+
 		if(.@mode == 1){
 				query_sql "DELETE FROM `reward_db` WHERE (`id_user` = '"+ getcharid(3) +"' AND `itemid` = '"+.@itemid[.@i]+ "' AND `amount` = '"+.@amount[.@i]+"') limit 1";
 		}else if(.@mode == 2){
 				query_sql "DELETE FROM `reward_db` WHERE (`id_user` = '"+ getcharid(0) +"' AND `itemid` = '"+.@itemid[.@i]+ "' AND `amount` = '"+.@amount[.@i]+"') limit 1";
 		}else if(.@mode == 3){
 				query_sql "DELETE FROM `reward_db` WHERE (`id_user` = '"+ getcharid(2) +"' AND `itemid` = '"+.@itemid[.@i]+ "' AND `amount` = '"+.@amount[.@i]+"') limit 1";
-		}else if(.@mode == 5){
-				query_sql "UPDATE `social_sharing_redeem` SET `date_redeemed` = CURRENT_TIMESTAMP, `redeemed_status` = '1', `redeemed_by` = '"+strcharinfo(0)+"' WHERE `email` = '"+.@email$+"' AND `id` = '"+.@id[.@i]+"'";
 		}
 		mes .n$;
 		mes "Here's your "+((.@refine[.@i] >= 1)?""+"+"+.@refine[.@i]+"":"")+" "+getitemname(.@itemid[.@i])+" x "+.@amount[.@i]+".";
 		close;
-		
+
 OnInit:
 	.n$ = "[ ^0000FFPost Man^000000 ]";					// NPC Name
 	.points_limit = 1000000000;
@@ -148,10 +136,10 @@ OnInit:
 end;
 
 }
-		
-alberta,148,56,3	duplicate(Post_Man)	Post Man#alb	4W_M_02
+
+//alberta,148,56,3	duplicate(Post_Man)	Post Man#alb	4W_M_02
 //payon,165,98,4	duplicate(Post_Man)	Post Man#pay	4W_M_02
-//prontera,112,99,5	duplicate(Post_Man)	Post Man#prt	4W_M_02
+prontera,110,97,5	duplicate(Post_Man)	Post Man#prt	4W_M_02
 //geffen,111,63,5	duplicate(Post_Man)	Post Man#gef	4W_M_02
 
 /*
@@ -203,3 +191,6 @@ CREATE TABLE  `reward_gm_log` (
   KEY `id` (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 */
+
+
+

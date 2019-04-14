@@ -47,7 +47,6 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 
 	uint8 server_num, n;
 	uint32 subnet_char_ip;
-	struct auth_node* node;
 	int i;
 
 #if PACKETVER < 20170315
@@ -89,7 +88,8 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 	}
 
 	{
-		struct online_login_data* data = (struct online_login_data*)idb_get(online_db, sd->account_id);
+		struct online_login_data* data = login_get_online_user( sd->account_id );
+
 		if( data )
 		{// account is already marked as online!
 			if( data->char_server > -1 )
@@ -108,7 +108,7 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 			if( data->char_server == -1 )
 			{// client has authed but did not access char-server yet
 				// wipe previous session
-				idb_remove(auth_db, sd->account_id);
+				login_remove_auth_node(sd->account_id);
 				login_remove_online_user(sd->account_id);
 				data = NULL;
 			}
@@ -116,6 +116,7 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 	}
 
 	login_log(ip, sd->userid, 100, "login ok");
+
 	ShowStatus("Connection of the account '%s' accepted.\n", sd->userid);
 
 	WFIFOHEAD(fd,header+size*server_num);
@@ -139,7 +140,7 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 		WFIFOL(fd,header+n*size) = htonl((subnet_char_ip) ? subnet_char_ip : ch_server[i].ip);
 		WFIFOW(fd,header+n*size+4) = ntows(htons(ch_server[i].port)); // [!] LE byte order here [!]
 		memcpy(WFIFOP(fd,header+n*size+6), ch_server[i].name, 20);
-		WFIFOW(fd,header+n*size+26) = ch_server[i].users;
+		WFIFOW(fd,header+n*size+26) = login_get_usercount( ch_server[i].users );
 		WFIFOW(fd,header+n*size+28) = ch_server[i].type;
 		WFIFOW(fd,header+n*size+30) = ch_server[i].new_;
 #if PACKETVER >= 20170315
@@ -150,21 +151,12 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 	WFIFOSET(fd,header+size*server_num);
 
 	// create temporary auth entry
-	CREATE(node, struct auth_node, 1);
-	node->account_id = sd->account_id;
-	node->login_id1 = sd->login_id1;
-	node->login_id2 = sd->login_id2;
-	node->sex = sd->sex;
-	node->ip = ip;
-	node->clienttype = sd->clienttype;
-	idb_put(auth_db, sd->account_id, node);
-	{
-		struct online_login_data* data;
-		// mark client as 'online'
-		data = login_add_online_user(-1, sd->account_id);
-		// schedule deletion of this node
-		data->waiting_disconnect = add_timer(gettick()+AUTH_TIMEOUT, login_waiting_disconnect_timer, sd->account_id, 0);
-	}
+	login_add_auth_node( sd, ip );
+
+	// mark client as 'online'
+	struct online_login_data* data = login_add_online_user(-1, sd->account_id);
+	// schedule deletion of this node
+	data->waiting_disconnect = add_timer(gettick()+AUTH_TIMEOUT, login_waiting_disconnect_timer, sd->account_id, 0);
 }
 
 /**
@@ -209,6 +201,7 @@ static void logclif_auth_failed(struct login_session_data* sd, int result) {
 		    login_log(ip, sd->userid, result, msg_txt(22)); //unknow error
 	}
 
+
 	if( (result == 0 || result == 1) && login_config.dynamic_pass_failure_ban )
 		ipban_log(ip); // log failed password attempt
 
@@ -238,7 +231,7 @@ static void logclif_auth_failed(struct login_session_data* sd, int result) {
 		timestamp2string(WFIFOCP(fd,3), 20, unban_time, login_config.date_format);
 	}
 	WFIFOSET(fd,23);
-#endif	
+#endif
 }
 
 /**
@@ -426,7 +419,9 @@ static int logclif_parse_reqcharconnec(int fd, struct login_session_data *sd, ch
 
 		ShowInfo("Connection request of the char-server '%s' @ %u.%u.%u.%u:%u (account: '%s', ip: '%s')\n", server_name, CONVIP(server_ip), server_port, sd->userid, ip);
 		sprintf(message, "charserver - %s@%u.%u.%u.%u:%u", server_name, CONVIP(server_ip), server_port);
+
 		login_log(session[fd]->client_addr, sd->userid, 100, message);
+
 
 		result = login_mmo_auth(sd, true);
 		if( runflag == LOGINSERVER_ST_RUNNING &&
@@ -492,7 +487,9 @@ int logclif_parse(int fd) {
 		if( login_config.ipban && ipban_check(ipl) )
 		{
 			ShowStatus("Connection refused: IP isn't authorised (deny/allow, ip: %s).\n", ip);
+
 			login_log(ipl, "unknown", -3, "ip banned");
+
 			WFIFOHEAD(fd,23);
 			WFIFOW(fd,0) = 0x6a;
 			WFIFOB(fd,2) = 3; // 3 = Rejected from Server
@@ -526,7 +523,7 @@ int logclif_parse(int fd) {
 		case 0x01fa: // S 01fa <version>.L <username>.24B <password hash>.16B <clienttype>.B <?>.B(index of the connection in the clientinfo file (+10 if the command-line contains "pc"))
 		case 0x027c: // S 027c <version>.L <username>.24B <password hash>.16B <clienttype>.B <?>.13B(junk)
 		case 0x0825: // S 0825 <packetsize>.W <version>.L <clienttype>.B <userid>.24B <password>.27B <mac>.17B <ip>.15B <token>.(packetsize - 0x5C)B
-			next = logclif_parse_reqauth(fd,  sd, command, ip); 
+			next = logclif_parse_reqauth(fd,  sd, command, ip);
 			break;
 		// Sending request of the coding key
 		case 0x01db: next = logclif_parse_reqkey(fd, sd); break;

@@ -236,12 +236,12 @@ bool chrif_auth_finished(struct map_session_data* sd) {
 }
 // sets char-server's user id
 void chrif_setuserid(char *id) {
-	memcpy(userid, id, NAME_LENGTH);
+	safestrncpy(userid, id, NAME_LENGTH);
 }
 
 // sets char-server's password
 void chrif_setpasswd(char *pwd) {
-	memcpy(passwd, pwd, NAME_LENGTH);
+	safestrncpy(passwd, pwd, NAME_LENGTH);
 }
 
 // security check, prints warning if using default password
@@ -290,7 +290,8 @@ int chrif_itemdestroy(int nameid)
 	WFIFOSET(char_fd, 4);
  	return 0;
 }
- int chrif_itemdestroy_ack(int nameid)
+
+int chrif_itemdestroy_ack(int nameid)
 {
 	pc_itemdestroy(nameid, false);
 	return 0;
@@ -505,6 +506,7 @@ int chrif_changemapserverack(uint32 account_id, int login_id1, int login_id2, ui
 	if ( !login_id1 ) {
 		ShowError("map server change failed.\n");
 		clif_authfail_fd(node->fd, 0);
+		chrif_char_offline(node->sd);
 	} else
 		clif_changemapserver(node->sd, map_index, x, y, ntohl(ip), ntohs(port));
 
@@ -516,10 +518,10 @@ int chrif_changemapserverack(uint32 account_id, int login_id1, int login_id2, ui
 
 /**
  * Does the char_serv have validate our connection to him ?
- * If yes then 
+ * If yes then
  *  - Send all our mapname to charserv
  *  - Retrieve guild castle
- *  - Do OnInterIfInit and OnInterIfInitOnce on all npc 
+ *  - Do OnInterIfInit and OnInterIfInitOnce on all npc
  * 0x2af9 <errCode>B
  */
 int chrif_connectack(int fd) {
@@ -598,8 +600,8 @@ void chrif_on_ready(void) {
 	do_reconnect_storage();
 
 	//Re-save any guild castles that were modified in the disconnection time.
-	guild_castle_reconnect(-1, 0, 0);
-	
+	guild_castle_reconnect(-1, CD_NONE, 0);
+
 	// Charserver is ready for loading autotrader
 	if (!char_init_done)
 	{
@@ -791,7 +793,7 @@ void chrif_authfail(int fd) {/* HELLO WORLD. ip in RFIFOL 15 is not being used (
  */
 int auth_db_cleanup_sub(DBKey key, DBData *data, va_list ap) {
 	struct auth_node *node = (struct auth_node *)db_data2ptr(data);
-	
+
 	if(DIFF_TICK(gettick(),node->node_created)>60000) {
 		const char* states[] = { "Login", "Logout", "Map change" };
 		switch (node->state) {
@@ -878,29 +880,6 @@ int chrif_changeemail(int id, const char *actual_email, const char *new_email) {
 	return 0;
 }
 
-/*==========================================
-* Judas Request - Reward
-*------------------------------------------*/
-bool chrif_process_reward(int awarderID, const char* awarderName, const char* rewardType, int expireDays, const char* char_name, int idType, int itemID, int itemAmount, int refineAmount, int boundType, int rentalMinutes)
-{
-	WFIFOHEAD(char_fd, 50);
-	WFIFOW(char_fd, 0) = 0x2743;
-	WFIFOL(char_fd, 2) = awarderID;
-	safestrncpy(WFIFOCP(char_fd, 6), awarderName, NAME_LENGTH);
-	safestrncpy(WFIFOCP(char_fd, 30), char_name, NAME_LENGTH);
-	safestrncpy(WFIFOCP(char_fd, 56), rewardType, NAME_LENGTH);
- 	// Set information
-	WFIFOL(char_fd, 82) = expireDays;
-	WFIFOL(char_fd, 84) = idType;
-	WFIFOL(char_fd, 86) = itemID;
-	WFIFOL(char_fd, 88) = itemAmount;
-	WFIFOL(char_fd, 90) = refineAmount;
-	WFIFOL(char_fd, 92) = boundType;
-	WFIFOL(char_fd, 94) = rentalMinutes;
- 	WFIFOSET(char_fd, 96);
- 	return true;
-}
-
 /**
  * S 2b0e <accid>.l <name>.24B <operation_type>.w <timediff>L <val1>L <val2>L
  * Send an account modification request to the login server (via char server).
@@ -930,6 +909,32 @@ int chrif_req_login_operation(int aid, const char* character_name, enum chrif_re
 	WFIFOL(char_fd,40) = val2;
 	WFIFOSET(char_fd,44);
 	return 0;
+}
+
+/*==========================================
+* Judas Request - Reward
+*------------------------------------------*/
+bool chrif_process_reward(int awarderID, const char* awarderName, const char* rewardType, int expireDays, const char* char_name, int idType, int itemID, int itemAmount, int refineAmount, int boundType, int rentalMinutes)
+{
+	WFIFOHEAD(char_fd, 50);
+	WFIFOW(char_fd, 0) = 0x2743;
+	WFIFOL(char_fd, 2) = awarderID;
+	safestrncpy(WFIFOCP(char_fd, 6), awarderName, NAME_LENGTH);
+	safestrncpy(WFIFOCP(char_fd, 30), char_name, NAME_LENGTH);
+	safestrncpy(WFIFOCP(char_fd, 56), rewardType, NAME_LENGTH);
+
+	// Set information
+	WFIFOL(char_fd, 82) = expireDays;
+	WFIFOL(char_fd, 84) = idType;
+	WFIFOL(char_fd, 86) = itemID;
+	WFIFOL(char_fd, 88) = itemAmount;
+	WFIFOL(char_fd, 90) = refineAmount;
+	WFIFOL(char_fd, 92) = boundType;
+	WFIFOL(char_fd, 94) = rentalMinutes;
+
+	WFIFOSET(char_fd, 96);
+
+	return true;
 }
 
 /**
@@ -977,7 +982,7 @@ static void chrif_ack_login_req(int aid, const char* player_name, uint16 type, u
 	char output[256];
 
 	sd = map_id2sd(aid);
-	
+
 	// Judas Request - Reward
 	if (answer > 9000) {
 		if (answer == 9999) {
@@ -1182,7 +1187,7 @@ int chrif_ban(int fd) {
 	}
 
 	sd->login_id1++; // change identify, because if player come back in char within the 5 seconds, he can change its characters
-	if (res == 0) { 
+	if (res == 0) {
 		int ret_status = RFIFOL(fd,7); // status or final date of a banishment
 		if(0<ret_status && ret_status<=9)
 			clif_displaymessage(sd->fd, msg_txt(sd,411+ret_status));
@@ -1207,7 +1212,7 @@ int chrif_ban(int fd) {
 
 int chrif_req_charban(int aid, const char* character_name, int32 timediff){
 	chrif_check(-1);
-	
+
 	WFIFOHEAD(char_fd,10+NAME_LENGTH);
 	WFIFOW(char_fd,0) = 0x2b28;
 	WFIFOL(char_fd,2) = aid;
@@ -1219,7 +1224,7 @@ int chrif_req_charban(int aid, const char* character_name, int32 timediff){
 
 int chrif_req_charunban(int aid, const char* character_name){
 	chrif_check(-1);
-	
+
 	WFIFOHEAD(char_fd,6+NAME_LENGTH);
 	WFIFOW(char_fd,0) = 0x2b2a;
 	WFIFOL(char_fd,2) = aid;
@@ -1364,7 +1369,7 @@ int chrif_updatefamelist_ack(int fd) {
 int chrif_save_scdata(struct map_session_data *sd) { //parses the sc_data of the player and sends it to the char-server for saving. [Skotlex]
 #ifdef ENABLE_SC_SAVING
 	int i, count=0;
-	unsigned int tick;
+	t_tick tick;
 	struct status_change_data data;
 	struct status_change *sc = &sd->sc;
 	const struct TimerData *timer;
@@ -1389,7 +1394,7 @@ int chrif_save_scdata(struct map_session_data *sd) { //parses the sc_data of the
 			else
 				data.tick = 0; //Negative tick does not necessarily mean that sc has expired
 		} else
-			data.tick = -1; //Infinite duration
+			data.tick = INFINITE_TICK; //Infinite duration
 		data.type = i;
 		data.val1 = sc->data[i]->val1;
 		data.val2 = sc->data[i]->val2;
@@ -1410,7 +1415,7 @@ int chrif_save_scdata(struct map_session_data *sd) { //parses the sc_data of the
 int chrif_skillcooldown_save(struct map_session_data *sd) {
 	int i, count = 0;
 	struct skill_cooldown_data data;
-	unsigned int tick;
+	t_tick tick;
 	const struct TimerData *timer;
 
 	chrif_check(-1);
@@ -1740,7 +1745,7 @@ int chrif_bsdata_save(struct map_session_data *sd, bool quit) {
 	WFIFOL(char_fd, 4) = sd->status.char_id;
 
 	if (sd->bonus_script.count) {
-		unsigned int tick = gettick();
+		t_tick tick = gettick();
 		struct linkdb_node *node = NULL;
 
 		for (node = sd->bonus_script.head; node && i < MAX_PC_BONUS_SCRIPT; node = node->next) {
@@ -2077,3 +2082,4 @@ void do_init_chrif(void) {
 	// send the user count every 10 seconds, to hide the charserver's online counting problem
 	add_timer_interval(gettick() + 1000, send_usercount_tochar, 0, 0, UPDATE_INTERVAL);
 }
+

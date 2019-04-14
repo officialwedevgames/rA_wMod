@@ -712,7 +712,7 @@
 5315,73,100	// Observer
 5324,73,100	// Little_Angel_Doll
 5372,73,100	// Drooping_White_Kitty
-5374,73,100	// L_Magestic_Goat
+5374,73,100	// Baphomet_Horn's
 5375,73,100	// L_Orc_Hero_Helm
 5376,73,100	// Satanic_Chain_P
 5377,73,100	// Antique_Pipe

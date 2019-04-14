@@ -1,0 +1,27 @@
+prontera,124,75,3	script	Bargchest	4_DOG01,{
+		mes "[ Bargchest ]";
+		mes "Choose a shop category..";
+		mes " ";
+		next;
+		switch( select("Usables [ TRADEABLE ]:Headgears [ 7 DAYS ]") ){
+			case 1:
+				mes "[ Bargchest ]";
+				mes "Okay.. great choice.";
+				close2;
+				callshop "Advent_Usable",4;
+			end;
+			case 2:
+				mes "[ Bargchest ]";
+				mes "Okay.. great choice.";
+				close2;
+				callshop "Advent_Headgears",4;
+			end;
+		}
+
+	end;
+
+	OnInit:
+		questinfo 1, QTYPE_EVENT, 0;
+	end;
+
+}

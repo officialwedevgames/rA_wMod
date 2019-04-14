@@ -11,6 +11,7 @@
 #include "../common/socket.hpp"
 #include "../common/sql.hpp"
 #include "../common/strlib.hpp"
+#include "../common/timer.hpp"
 
 #include "char.hpp"
 #include "char_logif.hpp"
@@ -214,12 +215,12 @@ void chmapif_send_maps(int fd, int map_id, int count, unsigned char *mapbuf) {
 		if (map_server[x].fd > 0 && x != map_id) {
 			uint16 i, j;
 
-			WFIFOHEAD(fd,10 +4*ARRAYLENGTH(map_server[x].map));
+			WFIFOHEAD(fd,10 +4*map_server[x].map.size());
 			WFIFOW(fd,0) = 0x2b04;
 			WFIFOL(fd,4) = htonl(map_server[x].ip);
 			WFIFOW(fd,8) = htons(map_server[x].port);
 			j = 0;
-			for(i = 0; i < ARRAYLENGTH(map_server[x].map); i++)
+			for(i = 0; i < map_server[x].map.size(); i++)
 				if (map_server[x].map[i])
 					WFIFOW(fd,10+(j++)*4) = map_server[x].map[i];
 			if (j > 0) {
@@ -297,7 +298,7 @@ int chmapif_parse_askscdata(int fd){
 			for( count = 0; count < 50 && SQL_SUCCESS == Sql_NextRow(sql_handle); ++count )
 			{
 				Sql_GetData(sql_handle, 0, &data, NULL); scdata.type = atoi(data);
-				Sql_GetData(sql_handle, 1, &data, NULL); scdata.tick = atoi(data);
+				Sql_GetData(sql_handle, 1, &data, NULL); scdata.tick = strtoll( data, nullptr, 10 );
 				Sql_GetData(sql_handle, 2, &data, NULL); scdata.val1 = atoi(data);
 				Sql_GetData(sql_handle, 3, &data, NULL); scdata.val2 = atoi(data);
 				Sql_GetData(sql_handle, 4, &data, NULL); scdata.val3 = atoi(data);
@@ -512,7 +513,7 @@ int chmapif_parse_req_saveskillcooldown(int fd){
 				memcpy(&data,RFIFOP(fd,14+i*sizeof(struct skill_cooldown_data)),sizeof(struct skill_cooldown_data));
 				if( i > 0 )
 					StringBuf_AppendStr(&buf, ", ");
-				StringBuf_Printf(&buf, "('%d','%d','%d','%d')", aid, cid, data.skill_id, data.tick);
+				StringBuf_Printf(&buf, "('%d','%d','%d','%" PRtf "')", aid, cid, data.skill_id, data.tick);
 			}
 			if( SQL_ERROR == Sql_QueryStr(sql_handle, StringBuf_Value(&buf)) )
 				Sql_ShowDebug(sql_handle);
@@ -551,7 +552,7 @@ int chmapif_parse_req_skillcooldown(int fd){
 			for( count = 0; count < MAX_SKILLCOOLDOWN && SQL_SUCCESS == Sql_NextRow(sql_handle); ++count )
 			{
 				Sql_GetData(sql_handle, 0, &data, NULL); scd.skill_id = atoi(data);
-				Sql_GetData(sql_handle, 1, &data, NULL); scd.tick = atoi(data);
+				Sql_GetData(sql_handle, 1, &data, NULL); scd.tick = strtoll( data, nullptr, 10 );
 				memcpy(WFIFOP(fd,14+count*sizeof(struct skill_cooldown_data)), &scd, sizeof(struct skill_cooldown_data));
 			}
 			if( count >= MAX_SKILLCOOLDOWN )
@@ -580,7 +581,7 @@ void chmapif_changemapserv_ack(int fd, bool nok){
     WFIFOHEAD(fd,30);
     WFIFOW(fd,0) = 0x2b06;
     memcpy(WFIFOP(fd,2), RFIFOP(fd,2), 28);
-    if(nok) 
+    if(nok)
 	WFIFOL(fd,6) = 0; //Set login1 to 0.(not ok)
     WFIFOSET(fd,30);
 }
@@ -765,7 +766,7 @@ int chmapif_parse_fwlog_changestatus(int fd){
 			//	if( acc != -1 && isGM(acc) < isGM(account_id) )
 			//		result = 2; // 2-gm level too low
 			else {
-				//! NOTE: See src/char/chrif.h::enum chrif_req_op for the number
+				//! NOTE: See src/char/chrif.hpp::enum chrif_req_op for the number
 				switch( operation ) {
 					case CHRIF_OP_LOGIN_BLOCK: // block
 						WFIFOHEAD(login_fd,10);
@@ -967,7 +968,7 @@ int chmapif_parse_save_scdata(int fd){
 				memcpy (&data, RFIFOP(fd, 14+i*sizeof(struct status_change_data)), sizeof(struct status_change_data));
 				if( i > 0 )
 					StringBuf_AppendStr(&buf, ", ");
-				StringBuf_Printf(&buf, "('%d','%d','%hu','%d','%ld','%ld','%ld','%ld')", aid, cid,
+				StringBuf_Printf(&buf, "('%d','%d','%hu','%" PRtf "','%ld','%ld','%ld','%ld')", aid, cid,
 					data.type, data.tick, data.val1, data.val2, data.val3, data.val4);
 			}
 			if( SQL_ERROR == Sql_QueryStr(sql_handle, StringBuf_Value(&buf)) )
@@ -1099,7 +1100,7 @@ int chmapif_parse_reqauth(int fd, int id){
  * @return : 0 not enough data received, 1 success
  */
 int chmapif_parse_updmapip(int fd, int id){
-	if (RFIFOREST(fd) < 6) 
+	if (RFIFOREST(fd) < 6)
 		return 0;
 	map_server[id].ip = ntohl(RFIFOL(fd, 2));
 	ShowInfo("Updated IP address of map-server #%d to %d.%d.%d.%d.\n", id, CONVIP(map_server[id].ip));
@@ -1216,7 +1217,7 @@ int chmapif_parse_reqcharban(int fd){
 			Sql_GetData(sql_handle, 2, &data, NULL); unban_time = atol(data);
 			Sql_FreeResult(sql_handle);
 
-			if(timediff<0 && unban_time==0) 
+			if(timediff<0 && unban_time==0)
 				return 1; //attemp to reduce time of a non banned account ?!?
 			else if(unban_time<now) unban_time=now; //new entry
 			unban_time += timediff; //alterate the time
@@ -1295,7 +1296,7 @@ int chmapif_bonus_script_get(int fd) {
 			schema_config.bonus_script_db, cid, MAX_PC_BONUS_SCRIPT) ||
 			SQL_ERROR == SqlStmt_Execute(stmt) ||
 			SQL_ERROR == SqlStmt_BindColumn(stmt, 0, SQLDT_STRING, &tmp_bsdata.script_str, sizeof(tmp_bsdata.script_str), NULL, NULL) ||
-			SQL_ERROR == SqlStmt_BindColumn(stmt, 1, SQLDT_UINT32, &tmp_bsdata.tick, 0, NULL, NULL) ||
+			SQL_ERROR == SqlStmt_BindColumn(stmt, 1, SQLDT_INT64, &tmp_bsdata.tick, 0, NULL, NULL) ||
 			SQL_ERROR == SqlStmt_BindColumn(stmt, 2, SQLDT_UINT16, &tmp_bsdata.flag, 0, NULL, NULL) ||
 			SQL_ERROR == SqlStmt_BindColumn(stmt, 3, SQLDT_UINT8,  &tmp_bsdata.type, 0, NULL, NULL) ||
 			SQL_ERROR == SqlStmt_BindColumn(stmt, 4, SQLDT_INT16,  &tmp_bsdata.icon, 0, NULL, NULL)
@@ -1346,18 +1347,22 @@ int chmapif_bonus_script_get(int fd) {
 int chmapif_itemdestroy(int nameid) {
 	unsigned char buf[4];
 	ShowInfo("Destroying item ID %d on all Users...\n", nameid);
- 	if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", schema_config.inventory_db, nameid))
+
+	if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", schema_config.inventory_db, nameid))
 		Sql_ShowDebug(sql_handle);
 	if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", schema_config.cart_db, nameid))
 		Sql_ShowDebug(sql_handle);
 	if (SQL_ERROR == Sql_Query(sql_handle, "DELETE FROM `%s` WHERE `nameid` = '%d'", schema_config.storage_db, nameid))
 		Sql_ShowDebug(sql_handle);
- 	WBUFW(buf, 0) = 0x2b33;
+
+	WBUFW(buf, 0) = 0x2b33;
 	WBUFW(buf, 2) = nameid;
 	chmapif_sendall(buf, 4);
- 	return 0;
+
+	return 0;
 }
- /****************************
+
+/****************************
 Judas Request - Reward
 ******************************/
 int chmapif_process_reward(int fd)
@@ -1366,12 +1371,14 @@ int chmapif_process_reward(int fd)
 	char esc_name1[NAME_LENGTH * 2 + 1];
 	char esc_name2[NAME_LENGTH * 2 + 1];
 	char esc_name3[NAME_LENGTH * 2 + 1];
- 	// Pull values that were sent over
+
+	// Pull values that were sent over
 	int awarderID = RFIFOL(fd, 2);
 	const char *awarderName = RFIFOCP(fd, 6);
 	const char *char_name = RFIFOCP(fd, 30);
 	const char *rewardType = RFIFOCP(fd, 56);
- 	// Get information
+
+	// Get information
 	int expireDays = RFIFOW(fd, 82);
 	int idType = RFIFOW(fd, 84);
 	int itemID = RFIFOW(fd, 86);
@@ -1379,12 +1386,16 @@ int chmapif_process_reward(int fd)
 	int refineAmount = RFIFOW(fd, 90);
 	int boundType = RFIFOW(fd, 92);
 	int rentalMinutes = RFIFOW(fd, 94);
- 	RFIFOSKIP(fd, 96);
- 	// SQL Processing
+
+
+	RFIFOSKIP(fd, 96);
+
+	// SQL Processing
 	Sql_EscapeStringLen(sql_handle, esc_name1, awarderName, strnlen(awarderName, NAME_LENGTH));
 	Sql_EscapeStringLen(sql_handle, esc_name2, rewardType, strnlen(rewardType, NAME_LENGTH));
 	Sql_EscapeStringLen(sql_handle, esc_name3, char_name, strnlen(char_name, NAME_LENGTH));
- 	// Check if player exists first...
+
+	// Check if player exists first...
 	if (SQL_ERROR == Sql_Query(sql_handle, "SELECT `char_id`,`guild_id`,`account_id` FROM `%s` WHERE `name` = '%s'", schema_config.char_db, esc_name3)) {
 		Sql_ShowDebug(sql_handle);
 	}
@@ -1401,11 +1412,13 @@ int chmapif_process_reward(int fd)
 		int dynamicID;
 		int char_id, guild_id, account_id;
 		char *data;
- 		Sql_GetData(sql_handle, 0, &data, NULL); char_id = atoi(data);
+
+		Sql_GetData(sql_handle, 0, &data, NULL); char_id = atoi(data);
 		Sql_GetData(sql_handle, 1, &data, NULL); guild_id = atoi(data);
 		Sql_GetData(sql_handle, 2, &data, NULL); account_id = atoi(data);
 		Sql_FreeResult(sql_handle);
- 		// Judas Reward v2
+
+		// Judas Reward v2
 		// If the character was rewarded using idtype 3 - guild, it should check if the character has a guild. if it not process will be canceled with a message.
 		if (idType == 3) {
 			if (guild_id == 0) {
@@ -1414,7 +1427,8 @@ int chmapif_process_reward(int fd)
 				return 0;
 			}
 		}
- 		// Check Account Level
+
+		// Check Account Level
 		int group_id;
 		if (SQL_ERROR == Sql_Query(sql_handle, "SELECT `group_id`"
 			"FROM login WHERE `account_id` = '%d'", account_id)
@@ -1424,16 +1438,19 @@ int chmapif_process_reward(int fd)
 			while (SQL_SUCCESS == Sql_NumRows(sql_handle)) {
 				char *data;
 				Sql_GetData(sql_handle, 0, &data, NULL); group_id = atoi(data);
- 			}
+
+			}
 		}
 		Sql_FreeResult(sql_handle);
- 		//if (group_id >= 5) {
+
+		//if (group_id >= 5) {
 		//	ShowDebug("%s is not allowed to be awarded because of group id: %d \n", char_name, group_id);
 		//	result = 9997;
 		//	chr->ask_name_ack(fd, awarderID, char_name, 0, result);
 		//	return;
 		//}
- 		// 1 = A - This means the account id will be stored in the id_user.
+
+		// 1 = A - This means the account id will be stored in the id_user.
 		// 2 = C - This means the character id will be stored in the id_user.
 		// 3 = G - This means the guild id will be stored in the id_user.
 		if (idType == 1) {
@@ -1445,20 +1462,25 @@ int chmapif_process_reward(int fd)
 		else if (idType == 3) {
 			dynamicID = guild_id;
 		}
- 		// Rewards
+
+		// Rewards
 		if (SQL_ERROR == Sql_Query(sql_handle, "INSERT INTO `%s` (`id_type`, `id_user`, `itemid`, `amount`, `refine`, `bound_type`, `rental_time`, `expire_date`, `date_added`) VALUES ('%d', '%d', '%d', '%d', '%d', '%d', '%d', ADDDATE(CURRENT_TIMESTAMP, INTERVAL '%d' DAY), CURRENT_TIMESTAMP)", "reward_db"
 			, idType, dynamicID, itemID, itemAmount, refineAmount, boundType, rentalMinutes, expireDays)) {
 			Sql_ShowDebug(sql_handle);
 		}
- 		// Log
+
+		// Log
 		if (SQL_ERROR == Sql_Query(sql_handle, "INSERT INTO `%s` (`id_type`, `id_user`, `itemid`, `amount`, `refine`, `bound_type`, `rental_time`, `expire_date`, `date_added`, `awarder`, `reward_type`) VALUES ('%d', '%d', '%d', '%d', '%d', '%d', '%d', ADDDATE(CURRENT_TIMESTAMP, INTERVAL '%d' DAY), CURRENT_TIMESTAMP, '%s', '%s')", "reward_gm_log"
 			, idType, dynamicID, itemID, itemAmount, refineAmount, boundType, rentalMinutes, expireDays, esc_name1, esc_name2)) {
 			Sql_ShowDebug(sql_handle);
 		}
- 		result = 10000; // all good
+
+		result = 10000; // all good
 	}
- 	chlogif_parse_ask_name_ack(fd, awarderID, char_name, 0, result);
- 	return 0;
+
+	chlogif_parse_ask_name_ack(fd, awarderID, char_name, 0, result);
+
+	return 0;
 }
 
 /**
@@ -1491,7 +1513,7 @@ int chmapif_bonus_script_save(int fd) {
 				Sql_EscapeString(sql_handle, esc_script, bsdata.script_str);
 				if (i > 0)
 					StringBuf_AppendStr(&buf,", ");
-				StringBuf_Printf(&buf, "('%d','%s','%d','%d','%d','%d')", cid, esc_script, bsdata.tick, bsdata.flag, bsdata.type, bsdata.icon);
+				StringBuf_Printf(&buf, "('%d','%s','%" PRtf "','%d','%d','%d')", cid, esc_script, bsdata.tick, bsdata.flag, bsdata.type, bsdata.icon);
 			}
 			if (SQL_ERROR == Sql_QueryStr(sql_handle,StringBuf_Value(&buf)))
 				Sql_ShowDebug(sql_handle);
@@ -1573,8 +1595,8 @@ int chmapif_parse(int fd){
 			//case 0x2b2c: /*free*/; break;
 			case 0x2b2d: next=chmapif_bonus_script_get(fd); break; //Load data
 			case 0x2b2e: next=chmapif_bonus_script_save(fd); break;//Save data
-			case 0x2743: next=chmapif_process_reward(fd); break;//Save data
-			case 0x2b32: next=chmapif_itemdestroy(fd); break;//itemdestroy
+			case 0x2743: next = chmapif_process_reward(fd); break;//Save data
+			case 0x2b32: next = chmapif_itemdestroy(fd); break;//itemdestroy
 			default:
 			{
 					// inter server - packet

@@ -20,9 +20,14 @@
 //	Balmung cannot be dropped, traded, or placed in Guild Storage (1+2+64).
 //	Only groups of group-level 50 and up can override this setting.
 
-19777,453,100	// C_Shiny_Small_Star
+19597,503,100	// C_Magic_Eyes
+19598,503,100	// C_Wondering_Wolf_Helm
+19607,503,100	// C_Love_Chick_Hat
+19608,503,100	// C_Chick_Hat
+19777,453,100	// C_Twinkle_Little_Star
 19917,493,100	// C_Gloomy_Pumpkin_Hat
 19990,453,100	// C_Snow_Rabbit_Knit_Hat
+20034,469,100	// C_Jack_Castle_Bat
 20130,461,100	// C_Whisper_Tall_Hat
 20132,461,100	// C_Subject_Aura
 20172,461,100	// C_Pumpkin_Head
@@ -81,8 +86,10 @@
 31867,511,100	// BG_Normal_Silver
 31868,511,100	// BG_Normal_Gold
 32001,511,99	// Beginner_Quest_Book
-32003,471,99	// Poring_Event_Token
-32004,471,99	// Dice_Event_Ticket
+32002,511,100	// Adventurer_Coin
+32003,461,99	// Premium_Voucher
+32004,461,99	// Premium_Voucher_7d
+32005,461,100	// Premium_Voucher_30d
 32006,511,99	// Zeny_Envelope
 32012,479,99	// H_Pumpkin
 32013,493,100	// Fragment_Box
@@ -91,7 +98,7 @@
 32023,511,50	// Costume_B
 32024,511,50	// Costume_C
 32025,511,50	// Costume_S
-32026,511,99	// Guild_Package_Box
+32026,511,99	// Mysterious_Box
 32027,511,99	// BG_Ranked_Reward1
 32028,511,99	// BG_Ranked_Reward2
 32029,511,99	// BG_Ranked_Reward3

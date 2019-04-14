@@ -122,6 +122,7 @@ OnBuyItem:
 OnInit:
 	//- <Reward ItemId>,<ROKPOINTS>,<Bound Type>,<ItemIDReq1>,<ItemAmountReq1>,...
 	setarray .costume_list$[0],
+			//"31377|0|0|7773|1000", // Even Only
 			"31305|0|0|1125|1|1135|1|2268|1",
 			"31596|0|0|706|1|705|2000",
 			"19990|1500|0|31776|1|",

@@ -112,3 +112,5 @@
 2202,1057	//Monkey - Yoyo
 2203,1130	//Hallow Jakk - Jakk
 2204,1509	//Wandering Lude - Lude
+2400,1905	//Barricade - Barricade
+2401,1905	//Barricade - Barricade

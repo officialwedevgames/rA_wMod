@@ -12,11 +12,11 @@ OnAtcommand:
 		dispbottom "Your level is to high for this command.";
 	}else{
 		if ( compare( .@atcmd_parameters$, "on" )) {
-			set #auto_buffs,1;
+			set @auto_buffs,1;
 			dispbottom "Auto Buffs is now enabled.";
 		}
 		else if ( compare( .@atcmd_parameters$, "off" )) { 
-			set #auto_buffs,0;
+			set @auto_buffs,0;
 			dispbottom "Auto Buffs is now disabled.";
 		}
 		else {
@@ -27,20 +27,24 @@ OnAtcommand:
 end;
 
 OnPCLoginEvent:
-	while(BaseLevel <= .lvreq || vip_status(VIP_STATUS_ACTIVE) && BaseLevel <= .viplvreq){
-		if(!#auto_buffs){
-			if(auto_buffs >= 900){
+OnReturn:
+	if(BaseLevel <= .lvreq || vip_status(VIP_STATUS_ACTIVE) && BaseLevel <= .viplvreq){
+		if(@auto_buffs){
+		
+			if(!buffs_start){
 				specialeffect2 37; sc_start SC_INCREASEAGI,300000,10;
 				specialeffect2 42; sc_start SC_BLESSING,300000,10;
-				auto_buffs = 0;
-			}else if(!auto_buffs){
-				sleep2 5000;
-				specialeffect2 37; sc_start SC_INCREASEAGI,300000,10;
-				specialeffect2 42; sc_start SC_BLESSING,300000,10;
-			}	
-			set auto_buffs,auto_buffs + 1;
+			}
+			
+			if(buffs_start >= 900){
+				set buffs_start, 0;
+			} else {
+				set buffs_start,buffs_start + 1;
+			}
+			
 		}
-		sleep2 1000;
 	}
+	sleep2 1000;
+	goto OnReturn;
 end;
 }
